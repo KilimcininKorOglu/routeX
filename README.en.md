@@ -17,11 +17,11 @@ No DNS cache clearing is needed on the client side. A brief warm-up period occur
 
 ## Supported Platforms
 
-| Platform              | Package Manager | Package Format |
-| :-------------------- | :-------------- | :------------- |
-| OpenWrt >= 25.12.X    | apk             | .apk           |
-| OpenWrt <= 24.10.X    | opkg            | .ipk           |
-| Entware (Keenetic)    | opkg            | .ipk           |
+| Platform           | Package Manager | Package Format |
+|:-------------------|:----------------|:---------------|
+| OpenWrt >= 25.12.X | apk             | .apk           |
+| OpenWrt <= 24.10.X | opkg            | .ipk           |
+| Entware (Keenetic) | opkg            | .ipk           |
 
 ## Installation
 
@@ -115,10 +115,10 @@ sub.example.com         not matched
 
 After installation, the web interface is available at `http://<router-ip>:8080` by default. Authentication is enabled by default; log in using your router's system credentials:
 
-| Platform           | Username | Password Source    |
-| :----------------- | :------- | :----------------- |
-| OpenWrt            | `root`   | `/etc/shadow`      |
-| Entware (Keenetic) | `root`   | `/opt/etc/shadow`  |
+| Platform           | Username | Password Source   |
+|:-------------------|:---------|:------------------|
+| OpenWrt            | `root`   | `/etc/shadow`     |
+| Entware (Keenetic) | `root`   | `/opt/etc/shadow` |
 
 Entware users must set a root password with the `passwd` command if one is not already configured.
 
@@ -135,17 +135,17 @@ Through the web interface you can:
 
 ## Technical Details
 
-| Property         | Value                                              |
-| :--------------- | :------------------------------------------------- |
-| Language         | Go 1.25                                            |
-| Web Interface    | templ + htmx + Alpine.js                           |
-| DNS Engine       | MITM proxy with miekg/dns                          |
-| Network Control  | iptables, ipset, netlink                           |
-| Configuration    | YAML                                               |
-| Authentication   | JWT (enabled by default)                           |
-| Localization     | Turkish, English (JSON locale files)               |
-| Package Format   | .ipk (opkg) and .apk (Alpine)                     |
-| License          | GPL-3.0-or-later                                   |
+| Property        | Value                                |
+|:----------------|:-------------------------------------|
+| Language        | Go 1.25                              |
+| Web Interface   | templ + htmx + Alpine.js             |
+| DNS Engine      | MITM proxy with miekg/dns            |
+| Network Control | iptables, ipset, netlink             |
+| Configuration   | YAML                                 |
+| Authentication  | JWT (enabled by default)             |
+| Localization    | Turkish, English (JSON locale files) |
+| Package Format  | .ipk (opkg) and .apk (Alpine)        |
+| License         | GPL-3.0-or-later                     |
 
 ## Building from Source
 
