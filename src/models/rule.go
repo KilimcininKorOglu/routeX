@@ -2,6 +2,7 @@ package models
 
 import (
 	"sync"
+	"time"
 
 	"routex/utils/intID"
 
@@ -48,6 +49,7 @@ func (d *Rule) Compile() error {
 				d.compiled = func(string) bool { return false }
 				return
 			}
+			re.MatchTimeout = 2 * time.Second
 			d.compiled = func(s string) bool {
 				ok, _ := re.MatchString(s)
 				return ok
