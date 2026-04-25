@@ -40,6 +40,17 @@ func (a *App) LoadConfig() error {
 	return nil
 }
 
+func (a *App) BackupConfig() error {
+	src, err := os.ReadFile(cfgFileLocation)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return nil
+		}
+		return fmt.Errorf("yedek oluşturulamadı: %w", err)
+	}
+	return os.WriteFile(cfgFileLocation+".bak", src, 0600)
+}
+
 func (a *App) SaveConfig() error {
 	out, err := yaml.Marshal(a.ExportConfig())
 	if err != nil {

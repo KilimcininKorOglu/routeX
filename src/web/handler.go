@@ -476,6 +476,10 @@ func (h *Handler) HtmxImportConfig(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	if err := h.app.BackupConfig(); err != nil {
+		log.Error().Err(err).Msg("config backup before import failed")
+	}
+
 	if err := h.app.ImportConfig(cfg); err != nil {
 		log.Error().Err(err).Msg("config import failed")
 		http.Error(w, "İçe aktarma başarısız", http.StatusInternalServerError)

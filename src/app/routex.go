@@ -22,6 +22,7 @@ type Main interface {
 	DnsOverrider() *netfilterTools.PortRemap
 	LoadConfig() error
 	SaveConfig() error
+	BackupConfig() error
 	ImportConfig(cfg config.Config) error
 	ExportConfig() config.Config
 	ForceCommitIPTables() error
