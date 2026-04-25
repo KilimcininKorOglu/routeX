@@ -1,4 +1,113 @@
 definitions:
+  auth.LoginRequest:
+    properties:
+      login:
+        type: string
+      password:
+        type: string
+    type: object
+  auth.LoginResponse:
+    properties:
+      token:
+        type: string
+    type: object
+  auth.StatusResponse:
+    properties:
+      enabled:
+        type: boolean
+    type: object
+  models.TestMatch:
+    properties:
+      groupColor:
+        type: string
+      groupId:
+        type: string
+      groupName:
+        type: string
+      interface:
+        type: string
+      ruleId:
+        type: string
+      ruleName:
+        type: string
+      rulePattern:
+        type: string
+      ruleType:
+        type: string
+    type: object
+  models.TestResult:
+    properties:
+      aliases:
+        items:
+          type: string
+        type: array
+      cachedIps:
+        items:
+          type: string
+        type: array
+      domain:
+        type: string
+      matches:
+        items:
+          $ref: '#/definitions/models.TestMatch'
+        type: array
+    type: object
+  stats.GroupSnapshot:
+    properties:
+      activeRules:
+        type: integer
+      color:
+        type: string
+      enabled:
+        type: boolean
+      id:
+        type: string
+      interface:
+        type: string
+      ipv4Entries:
+        type: integer
+      ipv6Entries:
+        type: integer
+      matchedDomains:
+        type: integer
+      name:
+        type: string
+      ruleCount:
+        type: integer
+    type: object
+  stats.Snapshot:
+    properties:
+      cacheAddresses:
+        type: integer
+      cacheDomains:
+        type: integer
+      droppedAAAA:
+        type: integer
+      fakePtrResponses:
+        type: integer
+      groups:
+        items:
+          $ref: '#/definitions/stats.GroupSnapshot'
+        type: array
+      matchedRoutes:
+        type: integer
+      queriesA:
+        type: integer
+      queriesAAAA:
+        type: integer
+      queriesOther:
+        type: integer
+      queriesPTR:
+        type: integer
+      totalQueries:
+        type: integer
+      totalResponses:
+        type: integer
+      uptime:
+        type: string
+      uptimeSeconds:
+        type: integer
+    type: object
   types.ErrorRes:
     properties:
       error:
@@ -26,6 +135,10 @@ definitions:
         items:
           $ref: '#/definitions/types.RuleReq'
         type: array
+      subscriptionInterval:
+        type: integer
+      subscriptionUrl:
+        type: string
     type: object
   types.GroupRes:
     properties:
@@ -48,6 +161,12 @@ definitions:
         items:
           $ref: '#/definitions/types.RuleRes'
         type: array
+      subscriptionInterval:
+        type: integer
+      subscriptionStatus:
+        $ref: '#/definitions/types.SubscriptionStatus'
+      subscriptionUrl:
+        type: string
     type: object
   types.GroupsReq:
     properties:
@@ -128,11 +247,66 @@ definitions:
           $ref: '#/definitions/types.RuleRes'
         type: array
     type: object
+  types.SubscriptionStatus:
+    properties:
+      lastError:
+        type: string
+      lastUpdated:
+        type: string
+      ruleCount:
+        type: integer
+    type: object
 info:
   contact: {}
   title: RouteX API
-  version: "0.1"
+  version: "1.7"
 paths:
+  /api/v1/auth:
+    get:
+      description: Returns whether authentication is enabled
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auth.StatusResponse'
+      summary: Auth status
+      tags:
+      - auth
+    post:
+      consumes:
+      - application/json
+      description: Authenticates a user and returns a session token
+      parameters:
+      - description: Request body
+        in: body
+        name: json
+        required: true
+        schema:
+          $ref: '#/definitions/auth.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auth.LoginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.ErrorRes'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/types.ErrorRes'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/types.ErrorRes'
+      summary: Login
+      tags:
+      - auth
   /api/v1/groups:
     get:
       description: Returns the list of groups
@@ -545,6 +719,73 @@ paths:
       summary: Update a rule
       tags:
       - rules
+  /api/v1/groups/{groupID}/subscription/refresh:
+    post:
+      description: Triggers an immediate refresh of the subscription rules from the remote URL
+      parameters:
+      - description: Group ID
+        in: path
+        name: groupID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.SubscriptionStatus'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.ErrorRes'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/types.ErrorRes'
+      summary: Refresh subscription
+      tags:
+      - subscription
+  /api/v1/groups/{groupID}/subscription/status:
+    get:
+      description: Returns the current subscription status for a group
+      parameters:
+      - description: Group ID
+        in: path
+        name: groupID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.SubscriptionStatus'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.ErrorRes'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/types.ErrorRes'
+      summary: Get subscription status
+      tags:
+      - subscription
+  /api/v1/stats:
+    get:
+      description: Returns application statistics including DNS query counts, cache info, and per-group metrics
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/stats.Snapshot'
+      summary: Get statistics
+      tags:
+      - stats
   /api/v1/system/config/save:
     post:
       description: Saves the current configuration to persistent storage
@@ -605,4 +846,27 @@ paths:
       summary: Get interfaces list
       tags:
       - config
+  /api/v1/test:
+    get:
+      description: Tests a domain against all routing rules and returns matching groups and rules
+      parameters:
+      - description: Domain name to test
+        in: query
+        name: domain
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.TestResult'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.ErrorRes'
+      summary: Test domain
+      tags:
+      - test
 swagger: "2.0"
