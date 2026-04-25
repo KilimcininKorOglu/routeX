@@ -8,6 +8,7 @@ import (
 	"routex/api/utils"
 	"routex/api/v1/types"
 	"routex/app"
+	"routex/i18n"
 	"routex/models"
 	"routex/utils/intID"
 
@@ -62,9 +63,10 @@ func (h *Handler) NetfilterDHook(w http.ResponseWriter, r *http.Request) {
 //	@Failure		500		{object}	types.ErrorRes
 //	@Router			/api/v1/system/interfaces [get]
 func (h *Handler) ListInterfaces(w http.ResponseWriter, r *http.Request) {
+	loc := i18n.FromContext(r.Context())
 	interfaces, err := h.app.ListInterfaces()
 	if err != nil {
-		utils.WriteError(w, http.StatusInternalServerError, fmt.Errorf("arayüzler alınamadı: %w", err).Error())
+		utils.WriteError(w, http.StatusInternalServerError, fmt.Sprintf("%s: %v", loc.T("error.list_interfaces_failed"), err))
 		return
 	}
 	res := make([]types.InterfaceRes, len(interfaces)+1)
@@ -85,8 +87,9 @@ func (h *Handler) ListInterfaces(w http.ResponseWriter, r *http.Request) {
 //	@Failure		500		{object}	types.ErrorRes
 //	@Router			/api/v1/system/config/save [post]
 func (h *Handler) SaveConfig(w http.ResponseWriter, r *http.Request) {
+	loc := i18n.FromContext(r.Context())
 	if err := h.app.SaveConfig(); err != nil {
-		utils.WriteError(w, http.StatusInternalServerError, fmt.Sprintf("yapılandırma kaydedilemedi: %v", err))
+		utils.WriteError(w, http.StatusInternalServerError, fmt.Sprintf("%s: %v", loc.T("error.save_config_failed"), err))
 	}
 }
 
@@ -130,7 +133,8 @@ func (h *Handler) PutGroups(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if req.Groups == nil {
-		utils.WriteError(w, http.StatusBadRequest, "istekte grup bulunamadı")
+		loc := i18n.FromContext(r.Context())
+		utils.WriteError(w, http.StatusBadRequest, loc.T("error.group_not_in_request"))
 		return
 	}
 	for _, g := range h.app.Groups() {
@@ -245,10 +249,11 @@ func (h *Handler) PutGroup(w http.ResponseWriter, r *http.Request) {
 	groupIdx, _ := strconv.Atoi(r.Header.Get("groupIdx"))
 	groupWrapper := h.app.Groups()[groupIdx]
 
+	loc := i18n.FromContext(r.Context())
 	enabled := groupWrapper.Enabled()
 	if enabled {
 		if err := groupWrapper.Disable(); err != nil {
-			utils.WriteError(w, http.StatusInternalServerError, fmt.Sprintf("grup devre dışı bırakılamadı: %v", err))
+			utils.WriteError(w, http.StatusInternalServerError, fmt.Sprintf("%s: %v", loc.T("error.group_disable_failed"), err))
 			return
 		}
 	}
@@ -261,11 +266,11 @@ func (h *Handler) PutGroup(w http.ResponseWriter, r *http.Request) {
 
 	if enabled {
 		if err := groupWrapper.Enable(); err != nil {
-			utils.WriteError(w, http.StatusInternalServerError, fmt.Sprintf("grup etkinleştirilemedi: %v", err))
+			utils.WriteError(w, http.StatusInternalServerError, fmt.Sprintf("%s: %v", loc.T("error.group_enable_failed"), err))
 			return
 		}
 		if err := groupWrapper.Sync(); err != nil {
-			utils.WriteError(w, http.StatusInternalServerError, fmt.Sprintf("grup senkronize edilemedi: %v", err))
+			utils.WriteError(w, http.StatusInternalServerError, fmt.Sprintf("%s: %v", loc.T("error.group_sync_failed"), err))
 			return
 		}
 	}
@@ -294,7 +299,8 @@ func (h *Handler) DeleteGroup(w http.ResponseWriter, r *http.Request) {
 	groupWrapper := h.app.Groups()[groupIdx]
 	if groupWrapper.Enabled() {
 		if err := groupWrapper.Disable(); err != nil {
-			utils.WriteError(w, http.StatusInternalServerError, fmt.Sprintf("grup devre dışı bırakılamadı: %v", err))
+			loc := i18n.FromContext(r.Context())
+			utils.WriteError(w, http.StatusInternalServerError, fmt.Sprintf("%s: %v", loc.T("error.group_disable_failed"), err))
 			return
 		}
 	}
@@ -344,8 +350,9 @@ func (h *Handler) PutRules(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
+	loc := i18n.FromContext(r.Context())
 	if req.Rules == nil {
-		utils.WriteError(w, http.StatusBadRequest, "istekte kural bulunamadı")
+		utils.WriteError(w, http.StatusBadRequest, loc.T("error.rule_not_in_request"))
 		return
 	}
 	groupIdx, _ := strconv.Atoi(r.Header.Get("groupIdx"))
@@ -365,7 +372,7 @@ func (h *Handler) PutRules(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 			if !found {
-				utils.WriteError(w, http.StatusNotFound, "kural bulunamadı")
+				utils.WriteError(w, http.StatusNotFound, loc.T("error.rule_not_found"))
 				return
 			}
 		}
@@ -380,7 +387,7 @@ func (h *Handler) PutRules(w http.ResponseWriter, r *http.Request) {
 	groupWrapper.Model().Rules = newRules
 	if enabled {
 		if err := groupWrapper.Sync(); err != nil {
-			utils.WriteError(w, http.StatusInternalServerError, fmt.Sprintf("grup senkronize edilemedi: %v", err))
+			utils.WriteError(w, http.StatusInternalServerError, fmt.Sprintf("%s: %v", loc.T("error.group_sync_failed"), err))
 			return
 		}
 	}
@@ -425,7 +432,8 @@ func (h *Handler) CreateRule(w http.ResponseWriter, r *http.Request) {
 	groupWrapper.Model().Rules = append(groupWrapper.Model().Rules, rule)
 	if enabled {
 		if err := groupWrapper.Sync(); err != nil {
-			utils.WriteError(w, http.StatusInternalServerError, fmt.Sprintf("grup senkronize edilemedi: %v", err))
+			loc := i18n.FromContext(r.Context())
+			utils.WriteError(w, http.StatusInternalServerError, fmt.Sprintf("%s: %v", loc.T("error.group_sync_failed"), err))
 			return
 		}
 	}
@@ -491,7 +499,8 @@ func (h *Handler) PutRule(w http.ResponseWriter, r *http.Request) {
 
 	if enabled {
 		if err := groupWrapper.Sync(); err != nil {
-			utils.WriteError(w, http.StatusInternalServerError, fmt.Sprintf("grup senkronize edilemedi: %v", err))
+			loc := i18n.FromContext(r.Context())
+			utils.WriteError(w, http.StatusInternalServerError, fmt.Sprintf("%s: %v", loc.T("error.group_sync_failed"), err))
 			return
 		}
 	}
@@ -525,7 +534,8 @@ func (h *Handler) DeleteRule(w http.ResponseWriter, r *http.Request) {
 	groupWrapper.Model().Rules = append(groupWrapper.Model().Rules[:ruleIdx], groupWrapper.Model().Rules[ruleIdx+1:]...)
 	if enabled {
 		if err := groupWrapper.Sync(); err != nil {
-			utils.WriteError(w, http.StatusInternalServerError, fmt.Sprintf("grup senkronize edilemedi: %v", err))
+			loc := i18n.FromContext(r.Context())
+			utils.WriteError(w, http.StatusInternalServerError, fmt.Sprintf("%s: %v", loc.T("error.group_sync_failed"), err))
 			return
 		}
 	}

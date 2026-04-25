@@ -19,7 +19,7 @@ func loadPasswordHash(login string) (string, error) {
 
 	file, err := os.Open(filePath)
 	if err != nil {
-		return "", fmt.Errorf("%s açılamadı: %w", filePath, err)
+		return "", fmt.Errorf("failed to open %s: %w", filePath, err)
 	}
 	defer file.Close()
 
@@ -38,12 +38,12 @@ func loadPasswordHash(login string) (string, error) {
 		}
 		hash := strings.TrimSpace(parts[1])
 		if hash == "" || hash == "x" || hash == "*" {
-			return "", errors.New("kullanıcının şifresi yok")
+			return "", errors.New("user has no password")
 		}
 		return hash, nil
 	}
 	if err := scanner.Err(); err != nil {
-		return "", fmt.Errorf("%s okunamadı: %w", filePath, err)
+		return "", fmt.Errorf("failed to read %s: %w", filePath, err)
 	}
-	return "", errors.New("kullanıcı bulunamadı")
+	return "", errors.New("user not found")
 }

@@ -24,7 +24,7 @@ const (
 
 func cryptPassword(password, salt string) (string, error) {
 	if strings.HasPrefix(salt, md5Prefix) {
-		return "", errors.New("md5crypt desteklenmiyor, şifrenizi sha256crypt veya sha512crypt ile güncelleyin")
+		return "", errors.New("md5crypt not supported, upgrade to sha256crypt or sha512crypt")
 	}
 	if strings.HasPrefix(salt, sha256Prefix) {
 		return sha256Crypt(password, salt)
@@ -32,7 +32,7 @@ func cryptPassword(password, salt string) (string, error) {
 	if strings.HasPrefix(salt, sha512Prefix) {
 		return sha512Crypt(password, salt)
 	}
-	return "", errors.New("desteklenmeyen hash formatı")
+	return "", errors.New("unsupported hash format")
 }
 
 func md5Crypt(password, salt string) (string, error) {
@@ -260,11 +260,11 @@ type hash interface {
 
 func extractSalt(prefix, salt string, maxLen int) ([]byte, error) {
 	if !strings.HasPrefix(salt, prefix) {
-		return nil, errors.New("geçersiz tuz ön eki")
+		return nil, errors.New("invalid salt prefix")
 	}
 	saltToks := bytes.Split([]byte(salt), []byte{'$'})
 	if len(saltToks) < 3 {
-		return nil, errors.New("geçersiz tuz formatı")
+		return nil, errors.New("invalid salt format")
 	}
 	payload := saltToks[2]
 	if len(payload) > maxLen {
@@ -275,11 +275,11 @@ func extractSalt(prefix, salt string, maxLen int) ([]byte, error) {
 
 func extractSaltAndRounds(prefix, salt string) ([]byte, int, bool, error) {
 	if !strings.HasPrefix(salt, prefix) {
-		return nil, 0, false, errors.New("geçersiz tuz ön eki")
+		return nil, 0, false, errors.New("invalid salt prefix")
 	}
 	saltToks := bytes.Split([]byte(salt), []byte{'$'})
 	if len(saltToks) < 3 {
-		return nil, 0, false, errors.New("geçersiz tuz formatı")
+		return nil, 0, false, errors.New("invalid salt format")
 	}
 	var rounds int
 	var custom bool
@@ -288,7 +288,7 @@ func extractSaltAndRounds(prefix, salt string) ([]byte, int, bool, error) {
 		custom = true
 		parsed, err := strconv.Atoi(string(payload[7:]))
 		if err != nil {
-			return nil, 0, false, errors.New("geçersiz tur sayısı")
+			return nil, 0, false, errors.New("invalid round count")
 		}
 		rounds = parsed
 		if rounds < shaRoundsMin {
@@ -297,7 +297,7 @@ func extractSaltAndRounds(prefix, salt string) ([]byte, int, bool, error) {
 			rounds = shaRoundsMax
 		}
 		if len(saltToks) < 4 {
-			return nil, 0, false, errors.New("geçersiz tuz formatı")
+			return nil, 0, false, errors.New("invalid salt format")
 		}
 		payload = saltToks[3]
 	} else {

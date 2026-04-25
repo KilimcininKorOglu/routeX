@@ -22,7 +22,7 @@ func GroupFromReq(req types.GroupReq, existing *models.Group) (*models.Group, er
 	}
 	if req.ID != nil {
 		if existing != nil && group.ID != *req.ID {
-			return nil, fmt.Errorf("grup kimliği uyuşmuyor")
+			return nil, fmt.Errorf("group ID mismatch")
 		}
 		if existing == nil {
 			group.ID = *req.ID
@@ -34,7 +34,7 @@ func GroupFromReq(req types.GroupReq, existing *models.Group) (*models.Group, er
 		group.Color = strings.ToLower(req.Color)
 	}
 	if err := models.ValidateInterfaceName(req.Interface); err != nil {
-		return nil, fmt.Errorf("geçersiz arayüz adı: %q", req.Interface)
+		return nil, fmt.Errorf("invalid interface name: %q", req.Interface)
 	}
 	group.Interface = req.Interface
 	group.Enable = true
@@ -77,7 +77,7 @@ func RuleFromReq(ruleReq types.RuleReq, existingRules []*models.Rule) (*models.R
 		models.RuleTypeRegEx, models.RuleTypeSubnet, models.RuleTypeSubnet6:
 		rule.Type = ruleReq.Type
 	default:
-		return nil, fmt.Errorf("geçersiz kural türü: %q", ruleReq.Type)
+		return nil, fmt.Errorf("invalid rule type: %q", ruleReq.Type)
 	}
 	rule.Rule = ruleReq.Rule
 	rule.Enable = ruleReq.Enable

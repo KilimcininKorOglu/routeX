@@ -15,14 +15,14 @@ const (
 
 func Authenticate(login, password string) (string, error) {
 	if login == "" || password == "" {
-		return "", errors.New("kimlik bilgileri eksik")
+		return "", errors.New("missing credentials")
 	}
 	passwordHash, err := loadPasswordHash(login)
 	if err != nil {
 		return "", err
 	}
 	if !verifyPassword(password, passwordHash) {
-		return "", errors.New("geçersiz kimlik bilgileri")
+		return "", errors.New("invalid credentials")
 	}
 	return issueToken(login, passwordHash)
 }
@@ -67,13 +67,13 @@ func verifyToken(token, login, passwordHash string) error {
 		return err
 	}
 	if claims.Sub != login {
-		return errors.New("token konusu uyuşmuyor")
+		return errors.New("token subject mismatch")
 	}
 	if claims.Iss != jwtIssuer {
-		return errors.New("token düzenleyici uyuşmuyor")
+		return errors.New("token issuer mismatch")
 	}
 	if claims.Exp <= time.Now().UTC().Unix() {
-		return errors.New("token süresi dolmuş")
+		return errors.New("token expired")
 	}
 	return nil
 }

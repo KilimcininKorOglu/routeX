@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"sync"
 	"time"
+
+	"routex/i18n"
 )
 
 const (
@@ -72,7 +74,8 @@ func LoginRateLimitMiddleware() func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ip := extractIP(r)
 			if !limiter.allow(ip) {
-				http.Error(w, "Çok fazla giriş denemesi. Lütfen daha sonra tekrar deneyin.", http.StatusTooManyRequests)
+				loc := i18n.FromContext(r.Context())
+				http.Error(w, loc.T("error.rate_limited"), http.StatusTooManyRequests)
 				return
 			}
 

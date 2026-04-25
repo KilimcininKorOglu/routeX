@@ -128,7 +128,7 @@ func SetupHTTP(a app.Main, errChan chan error) (*http.Server, error) {
 	log.Info().Msgf("Starting HTTP server on %s", addr)
 	go func() {
 		if e := srv.Serve(listener); e != nil && e != http.ErrServerClosed {
-			errChan <- fmt.Errorf("HTTP sunucu hatası: %v", e)
+			errChan <- fmt.Errorf("HTTP server error: %v", e)
 		}
 		listener.Close()
 	}()

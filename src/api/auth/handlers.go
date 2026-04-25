@@ -5,6 +5,7 @@ import (
 
 	"routex/api/utils"
 	"routex/app"
+	"routex/i18n"
 )
 
 type LoginRequest struct {
@@ -28,8 +29,9 @@ func StatusHandler(app app.Main) http.HandlerFunc {
 
 func LoginHandler(app app.Main) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		loc := i18n.FromContext(r.Context())
 		if !app.Config().HTTPWeb.Auth.Enabled {
-			utils.WriteError(w, http.StatusNotFound, "Kimlik doğrulama devre dışı")
+			utils.WriteError(w, http.StatusNotFound, loc.T("error.auth_disabled"))
 			return
 		}
 		
@@ -39,13 +41,13 @@ func LoginHandler(app app.Main) http.HandlerFunc {
 			return
 		}
 		if req.Login == "" || req.Password == "" {
-			utils.WriteError(w, http.StatusBadRequest, "kimlik bilgileri eksik")
+			utils.WriteError(w, http.StatusBadRequest, loc.T("error.credentials_missing"))
 			return
 		}
 
 		token, err := Authenticate(req.Login, req.Password)
 		if err != nil {
-			utils.WriteError(w, http.StatusForbidden, "Geçersiz kimlik bilgileri")
+			utils.WriteError(w, http.StatusForbidden, loc.T("error.login_invalid"))
 			return
 		}
 		utils.WriteJson(w, http.StatusOK, LoginResponse{Token: token})

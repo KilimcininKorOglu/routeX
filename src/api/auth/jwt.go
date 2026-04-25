@@ -25,11 +25,11 @@ type jwtClaims struct {
 func signJWT(header jwtHeader, claims jwtClaims, secret []byte) (string, error) {
 	headerBytes, err := json.Marshal(header)
 	if err != nil {
-		return "", fmt.Errorf("başlık serileştirilemedi: %w", err)
+		return "", fmt.Errorf("failed to serialize header: %w", err)
 	}
 	claimsBytes, err := json.Marshal(claims)
 	if err != nil {
-		return "", fmt.Errorf("talepler serileştirilemedi: %w", err)
+		return "", fmt.Errorf("failed to serialize claims: %w", err)
 	}
 	encodedHeader := base64.RawURLEncoding.EncodeToString(headerBytes)
 	encodedClaims := base64.RawURLEncoding.EncodeToString(claimsBytes)
@@ -42,12 +42,12 @@ func signJWT(header jwtHeader, claims jwtClaims, secret []byte) (string, error) 
 func parseAndVerifyJWT(token string, secret []byte) (jwtClaims, error) {
 	parts := strings.Split(token, ".")
 	if len(parts) != 3 {
-		return jwtClaims{}, errors.New("geçersiz token formatı")
+		return jwtClaims{}, errors.New("invalid token format")
 	}
 	payload := parts[0] + "." + parts[1]
 	expectedSig := hmacSHA256(payload, secret)
 	if !hmac.Equal([]byte(expectedSig), []byte(parts[2])) {
-		return jwtClaims{}, errors.New("geçersiz token imzası")
+		return jwtClaims{}, errors.New("invalid token signature")
 	}
 
 	return parseClaims(parts[1])
@@ -56,7 +56,7 @@ func parseAndVerifyJWT(token string, secret []byte) (jwtClaims, error) {
 func parseJWTWithoutVerification(token string) (jwtClaims, error) {
 	parts := strings.Split(token, ".")
 	if len(parts) != 3 {
-		return jwtClaims{}, errors.New("geçersiz token formatı")
+		return jwtClaims{}, errors.New("invalid token format")
 	}
 	return parseClaims(parts[1])
 }
@@ -64,11 +64,11 @@ func parseJWTWithoutVerification(token string) (jwtClaims, error) {
 func parseClaims(encoded string) (jwtClaims, error) {
 	claimsBytes, err := base64.RawURLEncoding.DecodeString(encoded)
 	if err != nil {
-		return jwtClaims{}, fmt.Errorf("talepler çözümlenemedi: %w", err)
+		return jwtClaims{}, fmt.Errorf("failed to decode claims: %w", err)
 	}
 	var claims jwtClaims
 	if err := json.Unmarshal(claimsBytes, &claims); err != nil {
-		return jwtClaims{}, fmt.Errorf("talepler ayrıştırılamadı: %w", err)
+		return jwtClaims{}, fmt.Errorf("failed to parse claims: %w", err)
 	}
 	return claims, nil
 }

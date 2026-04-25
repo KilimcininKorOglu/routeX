@@ -7,6 +7,7 @@ import (
 	"routex/api/auth"
 	"routex/api/utils"
 	"routex/app"
+	"routex/i18n"
 	"routex/utils/intID"
 
 	"github.com/go-chi/chi/v5"
@@ -25,10 +26,11 @@ func NewRouter(a app.Main) chi.Router {
 		r.Route("/{groupID}", func(r chi.Router) {
 			r.Use(func(next http.Handler) http.Handler {
 				return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					loc := i18n.FromContext(r.Context())
 					groupID := chi.URLParam(r, "groupID")
 					id, err := intID.ParseID(groupID)
 					if err != nil {
-						utils.WriteError(w, http.StatusBadRequest, "geçersiz grup kimliği")
+						utils.WriteError(w, http.StatusBadRequest, loc.T("error.invalid_group_id"))
 						return
 					}
 					for i, group := range h.app.Groups() {
@@ -38,7 +40,7 @@ func NewRouter(a app.Main) chi.Router {
 							return
 						}
 					}
-					utils.WriteError(w, http.StatusNotFound, "grup bulunamadı")
+					utils.WriteError(w, http.StatusNotFound, loc.T("error.group_not_found"))
 				})
 			})
 			r.Get("/", h.GetGroup)
@@ -51,10 +53,11 @@ func NewRouter(a app.Main) chi.Router {
 				r.Route("/{ruleID}", func(r chi.Router) {
 					r.Use(func(next http.Handler) http.Handler {
 						return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+							loc := i18n.FromContext(r.Context())
 							ruleID := chi.URLParam(r, "ruleID")
 							id, err := intID.ParseID(ruleID)
 							if err != nil {
-								utils.WriteError(w, http.StatusBadRequest, "geçersiz kural kimliği")
+								utils.WriteError(w, http.StatusBadRequest, loc.T("error.invalid_rule_id"))
 								return
 							}
 							groupIdx, _ := strconv.Atoi(r.Header.Get("groupIdx"))
@@ -65,7 +68,7 @@ func NewRouter(a app.Main) chi.Router {
 									return
 								}
 							}
-							utils.WriteError(w, http.StatusNotFound, "kural bulunamadı")
+							utils.WriteError(w, http.StatusNotFound, loc.T("error.rule_not_found"))
 						})
 					})
 					r.Get("/", h.GetRule)

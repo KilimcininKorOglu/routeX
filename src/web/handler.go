@@ -124,27 +124,27 @@ func (h *Handler) getGroupModels() []*models.Group {
 func (h *Handler) findGroupIndex(groupID string) (int, error) {
 	id, err := intID.ParseID(groupID)
 	if err != nil {
-		return -1, fmt.Errorf("geçersiz grup kimliği")
+		return -1, fmt.Errorf("invalid group ID")
 	}
 	for i, g := range h.app.Groups() {
 		if g.Model().ID == id {
 			return i, nil
 		}
 	}
-	return -1, fmt.Errorf("grup bulunamadı")
+	return -1, fmt.Errorf("group not found")
 }
 
 func (h *Handler) findRuleIndex(groupIdx int, ruleID string) (int, error) {
 	id, err := intID.ParseID(ruleID)
 	if err != nil {
-		return -1, fmt.Errorf("geçersiz kural kimliği")
+		return -1, fmt.Errorf("invalid rule ID")
 	}
 	for i, rule := range h.app.Groups()[groupIdx].Model().Rules {
 		if rule.ID == id {
 			return i, nil
 		}
 	}
-	return -1, fmt.Errorf("kural bulunamadı")
+	return -1, fmt.Errorf("rule not found")
 }
 
 func (h *Handler) HtmxGetGroups(w http.ResponseWriter, r *http.Request) {
