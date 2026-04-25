@@ -3,6 +3,21 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.2.0] - 2026-04-25
+
+### Added
+- Internationalization (i18n) system with Turkish and English support
+- JSON locale files (201 keys per language) embedded in binary
+- Language detection middleware (cookie, Accept-Language header, config default)
+- TR/EN language switcher toggle in header bar
+- Language preference stored in browser cookie
+
+### Changed
+- All backend error messages translated to English (internal consistency)
+- All templ components accept `loc *i18n.Localizer` parameter for dynamic strings
+- Language field added to AppConfig for default language setting
+- Fork maintainer added to CONTRIBUTORS.md
+
 ## [1.1.0] - 2026-04-25
 
 ### Added
