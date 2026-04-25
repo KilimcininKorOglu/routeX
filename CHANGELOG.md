@@ -3,6 +3,19 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.3.0] - 2026-04-25
+
+### Added
+- Rule subscription lists for auto-updating groups from remote URLs
+- Multi-format parser supporting plain text, hosts file, and AdGuard basic formats
+- Background refresh with configurable interval (default 24 hours)
+- Conditional GET (ETag/Last-Modified) for bandwidth-efficient updates
+- Subscription status UI with refresh button and auto-polling
+- REST API and HTMX endpoints for subscription refresh and status
+- Disk-based rule cache to prevent flash wear on routers
+- Deterministic rule IDs via SHA-256 to avoid collisions at scale
+- RSS badge indicator for subscription groups in collapsed view
+
 ## [1.2.0] - 2026-04-25
 
 ### Added
