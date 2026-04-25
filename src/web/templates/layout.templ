@@ -44,6 +44,23 @@ templ AppShell(activeTab string, loc *i18n.Localizer) {
 				</div>
 				<div class="header-actions">
 					<span id="save-status"></span>
+					<div style="display:flex;gap:2px;margin-right:8px">
+						if loc.Lang == "tr" {
+							<span style="padding:4px 8px;font-size:12px;font-weight:600;color:#107C10;background:#1a3a1a;border-radius:3px;cursor:default">TR</span>
+							<a
+								href="?lang=en"
+								style="padding:4px 8px;font-size:12px;color:#8a8a8a;text-decoration:none;border-radius:3px"
+								@click.prevent="document.cookie='lang=en;path=/;max-age=31536000';location.reload()"
+							>EN</a>
+						} else {
+							<a
+								href="?lang=tr"
+								style="padding:4px 8px;font-size:12px;color:#8a8a8a;text-decoration:none;border-radius:3px"
+								@click.prevent="document.cookie='lang=tr;path=/;max-age=31536000';location.reload()"
+							>TR</a>
+							<span style="padding:4px 8px;font-size:12px;font-weight:600;color:#107C10;background:#1a3a1a;border-radius:3px;cursor:default">EN</span>
+						}
+					</div>
 					<a href="/config/export" class="btn btn-ghost" style="padding:8px 16px;min-height:36px;font-size:13px">
 						{ loc.T("btn.export") }
 					</a>
