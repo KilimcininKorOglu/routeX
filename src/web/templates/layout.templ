@@ -1,0 +1,95 @@
+package templates
+
+import "routex/constant"
+
+templ Layout(title string) {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+			<meta name="color-scheme" content="dark"/>
+			<link rel="stylesheet" href="/static/css/fonts.css"/>
+			<link rel="stylesheet" href="/static/css/app.css"/>
+			<link rel="icon" href="/static/favicon.png"/>
+			<link rel="apple-touch-icon" href="/static/favicon.png"/>
+			<link rel="manifest" href="/static/manifest.json" crossorigin="use-credentials"/>
+			<script src="/static/js/htmx.min.js"></script>
+			<script defer src="/static/js/alpine.min.js"></script>
+			<title>{ title } - RouteX</title>
+		</head>
+		<body>
+			{ children... }
+		</body>
+	</html>
+}
+
+templ AppShell(activeTab string) {
+	@Layout("RouteX") {
+		<header class="header">
+			<div class="container">
+				<div class="header-title">
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#107C10" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						<circle cx="12" cy="12" r="10"></circle>
+						<line x1="2" y1="12" x2="22" y2="12"></line>
+						<path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+					</svg>
+					<span>RouteX</span>
+					<span style="font-size:11px;color:#8a8a8a;font-weight:400;background:#252525;padding:2px 8px;border-radius:3px">
+						{ constant.Version }
+					</span>
+				</div>
+				<div class="header-actions">
+					<span id="save-status"></span>
+					<a href="/config/export" class="btn btn-ghost" style="padding:8px 16px;min-height:36px;font-size:13px">
+						Dışa Aktar
+					</a>
+					<button
+						class="btn btn-ghost"
+						style="padding:8px 16px;min-height:36px;font-size:13px"
+						hx-get="/htmx/config/import-form"
+						hx-target="body"
+						hx-swap="beforeend"
+					>
+						İçe Aktar
+					</button>
+					<button
+						class="btn btn-ghost"
+						style="padding:8px 16px;min-height:36px;font-size:13px"
+						hx-post="/htmx/groups"
+						hx-target="#groups-content"
+						hx-swap="beforeend"
+					>
+						+ Grup Ekle
+					</button>
+					<button
+						class="btn btn-primary"
+						hx-post="/htmx/config/save"
+						hx-swap="none"
+					>
+						Kaydet
+					</button>
+				</div>
+			</div>
+		</header>
+		<div class="container" style="margin-top:24px">
+			<div class="tabs">
+				<a
+					href="/"
+					class={ "tab", templ.KV("active", activeTab == "groups") }
+				>
+					Gruplar
+				</a>
+				<a
+					href="/settings"
+					class={ "tab", templ.KV("active", activeTab == "settings") }
+				>
+					Ayarlar
+				</a>
+			</div>
+			<div id="tab-content">
+				{ children... }
+			</div>
+		</div>
+	}
+}

@@ -1,0 +1,15 @@
+{
+    "name": "RouteX WebUI",
+    "short_name": "RouteX",
+    "start_url": "/",
+    "display": "standalone",
+    "icons": [
+        {
+            "src": "/static/favicon.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        }
+    ],
+    "orientation": "any",
+    "prefer_related_applications": false
+}

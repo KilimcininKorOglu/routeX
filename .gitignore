@@ -1,0 +1,6 @@
+/.build
+/.config
+.DS_Store
+private-key.pem
+public-key.pem
+src/web/templates/**/*_templ.go

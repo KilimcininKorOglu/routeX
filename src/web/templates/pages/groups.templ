@@ -1,0 +1,17 @@
+package pages
+
+import (
+	"routex/models"
+	"routex/web/templates/components"
+)
+
+templ GroupsList(groups []*models.Group, interfaces []string) {
+	for _, group := range groups {
+		@components.GroupPanel(group, interfaces)
+	}
+	if len(groups) == 0 {
+		<div style="text-align:center;padding:3rem;color:var(--text-2)">
+			<p>Henüz grup yok. Başlamak için grup ekleyin.</p>
+		</div>
+	}
+}

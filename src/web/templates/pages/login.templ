@@ -1,0 +1,50 @@
+package pages
+
+import "routex/web/templates"
+
+templ Login(authError string) {
+	@templates.Layout("Login") {
+		<div
+			style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:#0e0e0e"
+			x-data="{ loading: false }"
+		>
+			<div class="card" style="width:100%;max-width:380px;border:1px solid #2d2d2d">
+				<div style="text-align:center;margin-bottom:24px">
+					<div style="margin-bottom:16px">
+						<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#107C10" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+							<circle cx="12" cy="12" r="10"></circle>
+							<line x1="2" y1="12" x2="22" y2="12"></line>
+							<path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+						</svg>
+					</div>
+					<h2 style="margin:0;font-size:20px;font-weight:600;letter-spacing:-0.01em">RouteX</h2>
+					<p style="margin:8px 0 0;color:#8a8a8a;font-size:13px">Devam etmek için giriş yapın</p>
+				</div>
+				<form
+					hx-post="/login"
+					hx-target="closest div.card"
+					hx-swap="outerHTML"
+					@submit="loading = true"
+				>
+					if authError != "" {
+						<div style="background:#1f1f1f;border-left:3px solid #e81123;border-radius:4px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:#ffffff">
+							{ authError }
+						</div>
+					}
+					<div style="margin-bottom:16px">
+						<label for="login" style="display:block;margin-bottom:8px;font-size:14px;font-weight:600;color:#ffffff">Kullanıcı Adı</label>
+						<input type="text" id="login" name="login" required style="width:100%" autofocus/>
+					</div>
+					<div style="margin-bottom:24px">
+						<label for="password" style="display:block;margin-bottom:8px;font-size:14px;font-weight:600;color:#ffffff">Şifre</label>
+						<input type="password" id="password" name="password" required style="width:100%"/>
+					</div>
+					<button type="submit" class="btn btn-primary" style="width:100%" :disabled="loading">
+						<span x-show="!loading">Giriş Yap</span>
+						<span x-show="loading" class="spinner" style="border-top-color:#ffffff"></span>
+					</button>
+				</form>
+			</div>
+		</div>
+	}
+}

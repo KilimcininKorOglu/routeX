@@ -1,0 +1,18 @@
+package pages
+
+import (
+	"routex/web/templates"
+	"routex/web/templates/components"
+)
+
+templ Dashboard() {
+	@templates.AppShell("groups") {
+		@components.SearchBar()
+		<div id="groups-content" hx-get="/htmx/groups" hx-trigger="load" hx-swap="innerHTML">
+			<div style="text-align:center;padding:3rem;color:var(--text-2)">
+				<div class="spinner" style="width:2rem;height:2rem;margin:0 auto 1rem"></div>
+				<p>Gruplar yükleniyor...</p>
+			</div>
+		</div>
+	}
+}

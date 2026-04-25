@@ -1,0 +1,212 @@
+name: Build and Package
+
+on:
+  push:
+    branches-ignore:
+      - 'refs/tags/*'
+    paths-ignore:
+      - '**.md'
+      - '.github/**'
+      - '!.github/workflows/build.yml'
+  release:
+    types: [published]
+
+jobs:
+  prepare:
+    name: Prepare build matrix
+    runs-on: ubuntu-latest
+    outputs:
+      configs: ${{ steps.collect.outputs.configs }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build config matrix
+        id: collect
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          from pathlib import Path
+
+          configs = sorted(Path("config").glob("*/*.config"))
+
+          if not configs:
+              raise SystemExit("No build configs found")
+
+          matrix = [
+              {
+                  "config": config.as_posix(),
+                  "name": config.stem,
+              }
+              for config in configs
+          ]
+
+          print(f"configs={json.dumps(matrix, separators=(',', ':'))}")
+          PY
+
+  build:
+    name: Build packages (${{ matrix.name }})
+    needs: prepare
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJson(needs.prepare.outputs.configs) }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: '1.23'
+
+      - name: Install templ
+        run: go install github.com/a-h/templ/cmd/templ@latest
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fakeroot upx
+
+      - name: Install apk-tools
+        run: |
+          docker run --rm -v /usr/local/bin:/mnt alpine:edge sh -c "apk add --no-cache apk-tools-static && cp /sbin/apk.static /mnt/apk && chmod +x /mnt/apk"
+
+      - name: Build and package
+        env:
+          BUILD_KEY_APK_SEC_CONTENT: ${{ secrets.BUILD_KEY_APK_SEC }}
+        run: |
+          export $(make _return_export_dynamic_env);
+          cp "${{ matrix.config }}" .config
+          if [ -n "$BUILD_KEY_APK_SEC_CONTENT" ]; then
+            KEY_FILE=$(mktemp)
+            printf '%s' "$BUILD_KEY_APK_SEC_CONTENT" > "$KEY_FILE"
+            export BUILD_KEY_APK_SEC="$KEY_FILE"
+          fi
+          make
+
+      - name: Collect package files
+        id: package_outputs
+        run: |
+          mapfile -t packages < <(
+            find .build -maxdepth 1 -type f \( -name "routex_*.ipk" -o -name "routex_*.apk" \) | sort
+          )
+
+          if [ "${#packages[@]}" -eq 0 ]; then
+            echo "No package files found" >&2
+            exit 1
+          fi
+
+          if [ "${#packages[@]}" -gt 2 ]; then
+            echo "Expected at most 2 package files, found ${#packages[@]}" >&2
+            exit 1
+          fi
+
+          for i in "${!packages[@]}"; do
+            index=$((i + 1))
+            file="${packages[$i]}"
+            echo "package_${index}_path=${file}" >> "$GITHUB_OUTPUT"
+            echo "package_${index}_name=$(basename "${file}")" >> "$GITHUB_OUTPUT"
+          done
+
+      - name: Upload package artifact 1
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.package_outputs.outputs.package_1_name }}
+          path: ${{ steps.package_outputs.outputs.package_1_path }}
+          if-no-files-found: error
+          compression-level: 0
+
+      - name: Upload package artifact 2
+        if: ${{ steps.package_outputs.outputs.package_2_path != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.package_outputs.outputs.package_2_name }}
+          path: ${{ steps.package_outputs.outputs.package_2_path }}
+          if-no-files-found: error
+          compression-level: 0
+
+      - name: Upload release asset 1
+        if: ${{ github.event_name == 'release' && steps.package_outputs.outputs.package_1_path != '' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.package_outputs.outputs.package_1_path }}
+          token: ${{ secrets.RELEASE_TOKEN }}
+
+      - name: Upload release asset 2
+        if: ${{ github.event_name == 'release' && steps.package_outputs.outputs.package_2_path != '' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.package_outputs.outputs.package_2_path }}
+          token: ${{ secrets.RELEASE_TOKEN }}
+
+  publish:
+    name: Publish package repository
+    needs: build
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'release' }}
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: Organize packages into repository structure
+        run: |
+          REPO_DIR="repo"
+          mkdir -p "$REPO_DIR"
+
+          for artifact_dir in artifacts/*/; do
+            for pkg in "$artifact_dir"*.ipk "$artifact_dir"*.apk; do
+              [ -f "$pkg" ] || continue
+              BASENAME=$(basename "$pkg")
+
+              # Parse filename: routex_<version>_<platform>_<arch>.<ext>
+              # Example: routex_1.0.0-1_openwrt_aarch64_generic.ipk
+              EXT="${BASENAME##*.}"
+              NAME_NO_EXT="${BASENAME%.*}"
+
+              # Extract platform and arch from filename
+              # Format: routex_<version>_<platform>_<arch>
+              PLATFORM_ARCH=$(echo "$NAME_NO_EXT" | sed 's/^routex_[^_]*-[^_]*_//')
+              PLATFORM=$(echo "$PLATFORM_ARCH" | cut -d'_' -f1)
+              ARCH=$(echo "$PLATFORM_ARCH" | sed "s/^${PLATFORM}_//")
+
+              if [ "$EXT" = "ipk" ]; then
+                TARGET_DIR="$REPO_DIR/${PLATFORM}-ipk/${ARCH}"
+              elif [ "$EXT" = "apk" ]; then
+                TARGET_DIR="$REPO_DIR/${PLATFORM}-apk/${ARCH}"
+              else
+                continue
+              fi
+
+              mkdir -p "$TARGET_DIR"
+              cp "$pkg" "$TARGET_DIR/"
+              echo "  $BASENAME -> $TARGET_DIR/"
+            done
+          done
+
+      - name: Generate opkg Packages index files
+        run: |
+          for dir in repo/*-ipk/*/; do
+            [ -d "$dir" ] || continue
+            echo "Generating index for: $dir"
+            bash scripts/generate-packages.sh "$dir"
+          done
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./repo
+          destination_dir: packages
+          keep_files: false
+          force_orphan: true

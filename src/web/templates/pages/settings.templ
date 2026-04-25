@@ -1,0 +1,79 @@
+package pages
+
+import (
+	"fmt"
+	"routex/models"
+	"routex/web/templates"
+)
+
+templ Settings(cfg models.AppConfig) {
+	@templates.AppShell("settings") {
+		<div style="max-width:640px">
+			@settingsSection("DNS Vekil Sunucu") {
+				@settingsRow("Dinleme Adresi", fmt.Sprintf("%s:%d", cfg.DNSProxy.Host.Address, cfg.DNSProxy.Host.Port))
+				@settingsRow("Üst DNS", fmt.Sprintf("%s:%d", cfg.DNSProxy.Upstream.Address, cfg.DNSProxy.Upstream.Port))
+				@settingsRow("Port 53 Yönlendirme", boolDisplay(!cfg.DNSProxy.DisableRemap53))
+				@settingsRow("Sahte PTR", boolDisplay(!cfg.DNSProxy.DisableFakePTR))
+				@settingsRow("AAAA Kayıtlarını Engelle", boolDisplay(!cfg.DNSProxy.DisableDropAAAA))
+				@settingsRow("Maks. Boşta Bağlantı", fmt.Sprintf("%d", cfg.DNSProxy.MaxIdleConns))
+				@settingsRow("Maks. Eşzamanlı", fmt.Sprintf("%d", cfg.DNSProxy.MaxConcurrent))
+				@settingsRow("Zaman Aşımı", cfg.DNSProxy.Timeout.String())
+			}
+			@settingsSection("HTTP Web Arayüzü") {
+				@settingsRow("Etkin", boolDisplay(cfg.HTTPWeb.Enabled))
+				@settingsRow("Dinleme Adresi", fmt.Sprintf("%s:%d", cfg.HTTPWeb.Host.Address, cfg.HTTPWeb.Host.Port))
+				@settingsRow("Kimlik Doğrulama", boolDisplay(cfg.HTTPWeb.Auth.Enabled))
+			}
+			@settingsSection("Netfilter") {
+				@settingsRow("IPTables Zincir Ön Eki", cfg.Netfilter.IPTables.ChainPrefix)
+				@settingsRow("IPSet Tablo Ön Eki", cfg.Netfilter.IPSet.TablePrefix)
+				@settingsRow("IPSet Ek TTL", fmt.Sprintf("%d s", cfg.Netfilter.IPSet.AdditionalTTL))
+				@settingsRow("IPv4", boolDisplay(!cfg.Netfilter.DisableIPv4))
+				@settingsRow("IPv6", boolDisplay(!cfg.Netfilter.DisableIPv6))
+				@settingsRow("Başlangıç İşaret İndeksi", fmt.Sprintf("0x%X", cfg.Netfilter.StartMarkTableIndex))
+			}
+			@settingsSection("Sistem") {
+				@settingsRow("Günlük Seviyesi", cfg.LogLevel)
+				@settingsRow("Tüm Arayüzleri Göster", boolDisplay(cfg.ShowAllInterfaces))
+				@settingsRow("Bağlantı Arayüzleri", fmt.Sprintf("%v", cfg.Link))
+			}
+		</div>
+	}
+}
+
+templ settingsSection(title string) {
+	<div style="margin-bottom:24px">
+		<h3 style="margin:0 0 12px;font-size:14px;font-weight:600;color:#ffffff;text-transform:uppercase;letter-spacing:0.03em">
+			{ title }
+		</h3>
+		<div class="card" style="padding:0;overflow:hidden">
+			<table style="width:100%;border-collapse:collapse;font-size:14px">
+				<tbody>
+					{ children... }
+				</tbody>
+			</table>
+		</div>
+	</div>
+}
+
+templ settingsRow(label string, value string) {
+	<tr>
+		<td style="padding:12px 16px;color:#8a8a8a;border-bottom:1px solid #2d2d2d;width:45%">{ label }</td>
+		<td style="padding:12px 16px;font-family:var(--font-mono);color:#ffffff;border-bottom:1px solid #2d2d2d">
+			if value == "Etkin" {
+				<span style="color:#107C10;font-weight:600">{ value }</span>
+			} else if value == "Devre Dışı" {
+				<span style="color:#8a8a8a">{ value }</span>
+			} else {
+				{ value }
+			}
+		</td>
+	</tr>
+}
+
+func boolDisplay(v bool) string {
+	if v {
+		return "Etkin"
+	}
+	return "Devre Dışı"
+}

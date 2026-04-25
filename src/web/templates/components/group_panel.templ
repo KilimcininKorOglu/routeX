@@ -1,0 +1,150 @@
+package components
+
+import (
+	"fmt"
+	"routex/models"
+)
+
+templ GroupPanel(group *models.Group, interfaces []string) {
+	<div
+		class="card"
+		id={ fmt.Sprintf("group-%s", group.ID.String()) }
+		style="margin-bottom:1rem"
+		x-data="{ open: false, editing: false }"
+	>
+		<div
+			style="display:flex;align-items:center;justify-content:space-between;cursor:pointer"
+			@click="open = !open"
+		>
+			<div style="display:flex;align-items:center;gap:0.75rem">
+				<div
+					style={ fmt.Sprintf("width:12px;height:12px;border-radius:50%%;background-color:%s;flex-shrink:0", group.Color) }
+				></div>
+				<span style="font-weight:600">{ group.Name }</span>
+				<span style="font-size:0.75rem;color:var(--text-2)">
+					{ fmt.Sprintf("%d kural", len(group.Rules)) }
+				</span>
+				if !group.Enable {
+					<span style="font-size:0.7rem;padding:0.1rem 0.4rem;border-radius:4px;background:var(--bg-light-extra);color:var(--text-2)">
+						devre dışı
+					</span>
+				}
+			</div>
+			<div style="display:flex;align-items:center;gap:0.25rem" @click.stop="">
+				<button
+					class="btn btn-ghost"
+					style="padding:0.15rem 0.3rem;font-size:0.7rem;line-height:1"
+					hx-post={ fmt.Sprintf("/htmx/groups/%s/move/up", group.ID.String()) }
+					hx-target="#groups-content"
+					hx-swap="innerHTML"
+					title="Yukarı taşı"
+				>&#9650;</button>
+				<button
+					class="btn btn-ghost"
+					style="padding:0.15rem 0.3rem;font-size:0.7rem;line-height:1"
+					hx-post={ fmt.Sprintf("/htmx/groups/%s/move/down", group.ID.String()) }
+					hx-target="#groups-content"
+					hx-swap="innerHTML"
+					title="Aşağı taşı"
+				>&#9660;</button>
+				<span style="font-size:0.75rem;color:var(--text-2);margin-left:0.25rem">{ group.Interface }</span>
+				<svg
+					x-bind:style={ "open ? 'transform:rotate(180deg)' : ''" }
+					style="width:16px;height:16px;transition:transform 0.15s ease;color:var(--text-2)"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				>
+					<polyline points="6 9 12 15 18 9"></polyline>
+				</svg>
+			</div>
+		</div>
+		<div x-show="open" x-cloak style="margin-top:1rem">
+			<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem">
+				<div style="display:flex;align-items:center;gap:0.5rem">
+					<button
+						class="btn btn-ghost"
+						style="font-size:0.8rem;padding:0.3rem 0.6rem"
+						@click.stop="editing = !editing"
+						x-text="editing ? 'Tamam' : 'Grubu Düzenle'"
+					></button>
+				</div>
+				<div style="display:flex;align-items:center;gap:0.5rem">
+					<button
+						class="btn btn-ghost"
+						style="font-size:0.8rem;padding:0.3rem 0.6rem"
+						hx-post={ fmt.Sprintf("/htmx/groups/%s/rules", group.ID.String()) }
+						hx-target={ fmt.Sprintf("#rules-%s", group.ID.String()) }
+						hx-swap="beforeend"
+					>
+						+ Kural Ekle
+					</button>
+					<button
+						class="btn btn-danger"
+						style="font-size:0.8rem;padding:0.3rem 0.6rem"
+						hx-delete={ fmt.Sprintf("/htmx/groups/%s", group.ID.String()) }
+						hx-target={ fmt.Sprintf("#group-%s", group.ID.String()) }
+						hx-swap="outerHTML"
+						hx-confirm="Bu grubu silmek istediğinize emin misiniz?"
+					>
+						Sil
+					</button>
+				</div>
+			</div>
+			<template x-if="editing">
+				@GroupEditForm(group, interfaces)
+			</template>
+			<div id={ fmt.Sprintf("rules-%s", group.ID.String()) }>
+				if len(group.Rules) == 0 {
+					<p style="text-align:center;color:var(--text-2);font-size:0.875rem;padding:1rem 0">
+						Bu grupta henüz kural yok.
+					</p>
+				}
+				for _, rule := range group.Rules {
+					@RuleRow(group.ID.String(), rule)
+				}
+			</div>
+		</div>
+	</div>
+}
+
+templ GroupEditForm(group *models.Group, interfaces []string) {
+	<form
+		hx-put={ fmt.Sprintf("/htmx/groups/%s", group.ID.String()) }
+		hx-target={ fmt.Sprintf("#group-%s", group.ID.String()) }
+		hx-swap="outerHTML"
+		style="background:var(--bg-medium);border-radius:6px;padding:0.75rem;margin-bottom:0.75rem"
+		@submit="editing = false"
+	>
+		<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.75rem">
+			<div>
+				<label style="display:block;font-size:0.75rem;color:var(--text-2);margin-bottom:0.25rem">Ad</label>
+				<input type="text" name="name" value={ group.Name } required style="width:100%"/>
+			</div>
+			<div>
+				<label style="display:block;font-size:0.75rem;color:var(--text-2);margin-bottom:0.25rem">Arayüz</label>
+				<select name="interface" style="width:100%">
+					for _, iface := range interfaces {
+						<option value={ iface } selected?={ iface == group.Interface }>{ iface }</option>
+					}
+				</select>
+			</div>
+		</div>
+		<div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.75rem">
+			<div>
+				<label style="display:block;font-size:0.75rem;color:var(--text-2);margin-bottom:0.25rem">Renk</label>
+				<input type="color" name="color" value={ group.Color } style="width:40px;height:32px;border:none;padding:0;cursor:pointer"/>
+			</div>
+			<div style="display:flex;align-items:center;gap:0.5rem;margin-top:1rem">
+				<input type="checkbox" name="enable" id={ fmt.Sprintf("enable-%s", group.ID.String()) } checked?={ group.Enable }/>
+				<label for={ fmt.Sprintf("enable-%s", group.ID.String()) } style="font-size:0.875rem">Etkin</label>
+			</div>
+		</div>
+		<button type="submit" class="btn btn-primary" style="font-size:0.8rem;padding:0.3rem 0.8rem">
+			Kaydet
+		</button>
+	</form>
+}

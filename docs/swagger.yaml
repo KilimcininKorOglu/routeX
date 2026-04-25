@@ -1,0 +1,608 @@
+definitions:
+  types.ErrorRes:
+    properties:
+      error:
+        example: something went wrong
+        type: string
+    type: object
+  types.GroupReq:
+    properties:
+      color:
+        example: '#ffffff'
+        type: string
+      enable:
+        example: true
+        type: boolean
+      id:
+        example: 0a1b2c3d
+        type: string
+      interface:
+        example: nwg0
+        type: string
+      name:
+        example: Routing
+        type: string
+      rules:
+        items:
+          $ref: '#/definitions/types.RuleReq'
+        type: array
+    type: object
+  types.GroupRes:
+    properties:
+      color:
+        example: '#ffffff'
+        type: string
+      enable:
+        example: true
+        type: boolean
+      id:
+        example: 0a1b2c3d
+        type: string
+      interface:
+        example: nwg0
+        type: string
+      name:
+        example: Routing
+        type: string
+      rules:
+        items:
+          $ref: '#/definitions/types.RuleRes'
+        type: array
+    type: object
+  types.GroupsReq:
+    properties:
+      groups:
+        items:
+          $ref: '#/definitions/types.GroupReq'
+        type: array
+    type: object
+  types.GroupsRes:
+    properties:
+      groups:
+        items:
+          $ref: '#/definitions/types.GroupRes'
+        type: array
+    type: object
+  types.InterfaceRes:
+    properties:
+      id:
+        example: nwg0
+        type: string
+    type: object
+  types.InterfacesRes:
+    properties:
+      interfaces:
+        items:
+          $ref: '#/definitions/types.InterfaceRes'
+        type: array
+    type: object
+  types.NetfilterDHookReq:
+    properties:
+      table:
+        example: nat
+        type: string
+      type:
+        example: iptables
+        type: string
+    type: object
+  types.RuleReq:
+    properties:
+      enable:
+        example: true
+        type: boolean
+      id:
+        example: 0a1b2c3d
+        type: string
+      name:
+        example: Example Domain
+        type: string
+      rule:
+        example: example.com
+        type: string
+      type:
+        example: domain
+        type: string
+    type: object
+  types.RuleRes:
+    properties:
+      enable:
+        example: true
+        type: boolean
+      id:
+        example: 0a1b2c3d
+        type: string
+      name:
+        example: Example Domain
+        type: string
+      rule:
+        example: example.com
+        type: string
+      type:
+        example: domain
+        type: string
+    type: object
+  types.RulesRes:
+    properties:
+      rules:
+        items:
+          $ref: '#/definitions/types.RuleRes'
+        type: array
+    type: object
+info:
+  contact: {}
+  title: RouteX API
+  version: "0.1"
+paths:
+  /api/v1/groups:
+    get:
+      description: Returns the list of groups
+      parameters:
+      - description: Return groups with their rules
+        in: query
+        name: with_rules
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.GroupsRes'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/types.ErrorRes'
+      summary: Get groups list
+      tags:
+      - groups
+    post:
+      consumes:
+      - application/json
+      description: Creates a group
+      parameters:
+      - description: Save changes to the configuration file
+        in: query
+        name: save
+        type: boolean
+      - description: Request body
+        in: body
+        name: json
+        required: true
+        schema:
+          $ref: '#/definitions/types.GroupReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.GroupRes'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.ErrorRes'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/types.ErrorRes'
+      summary: Create a group
+      tags:
+      - groups
+    put:
+      consumes:
+      - application/json
+      description: Updates the list of groups
+      parameters:
+      - description: Save changes to the configuration file
+        in: query
+        name: save
+        type: boolean
+      - description: Request body
+        in: body
+        name: json
+        required: true
+        schema:
+          $ref: '#/definitions/types.GroupsReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.GroupsRes'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.ErrorRes'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/types.ErrorRes'
+      summary: Update groups list
+      tags:
+      - groups
+  /api/v1/groups/{groupID}:
+    delete:
+      description: Deletes the requested group
+      parameters:
+      - description: Group ID
+        in: path
+        name: groupID
+        required: true
+        type: string
+      - description: Save changes to the configuration file
+        in: query
+        name: save
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/types.ErrorRes'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/types.ErrorRes'
+      summary: Delete a group
+      tags:
+      - groups
+    get:
+      description: Returns the requested group
+      parameters:
+      - description: Group ID
+        in: path
+        name: groupID
+        required: true
+        type: string
+      - description: Return group with its rules
+        in: query
+        name: with_rules
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.GroupRes'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/types.ErrorRes'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/types.ErrorRes'
+      summary: Get a group
+      tags:
+      - groups
+    put:
+      consumes:
+      - application/json
+      description: Updates the requested group
+      parameters:
+      - description: Group ID
+        in: path
+        name: groupID
+        required: true
+        type: string
+      - description: Save changes to the configuration file
+        in: query
+        name: save
+        type: boolean
+      - description: Request body
+        in: body
+        name: json
+        required: true
+        schema:
+          $ref: '#/definitions/types.GroupReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.GroupRes'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.ErrorRes'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/types.ErrorRes'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/types.ErrorRes'
+      summary: Update a group
+      tags:
+      - groups
+  /api/v1/groups/{groupID}/rules:
+    get:
+      description: Returns the list of rules
+      parameters:
+      - description: Group ID
+        in: path
+        name: groupID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.RulesRes'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/types.ErrorRes'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/types.ErrorRes'
+      summary: Get rules list
+      tags:
+      - rules
+    post:
+      consumes:
+      - application/json
+      description: Creates a rule
+      parameters:
+      - description: Group ID
+        in: path
+        name: groupID
+        required: true
+        type: string
+      - description: Save changes to the configuration file
+        in: query
+        name: save
+        type: boolean
+      - description: Request body
+        in: body
+        name: json
+        required: true
+        schema:
+          $ref: '#/definitions/types.RuleReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.RuleRes'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.ErrorRes'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/types.ErrorRes'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/types.ErrorRes'
+      summary: Create a rule
+      tags:
+      - rules
+    put:
+      consumes:
+      - application/json
+      description: Updates the list of rules
+      parameters:
+      - description: Group ID
+        in: path
+        name: groupID
+        required: true
+        type: string
+      - description: Save changes to the configuration file
+        in: query
+        name: save
+        type: boolean
+      - description: Request body
+        in: body
+        name: json
+        required: true
+        schema:
+          $ref: '#/definitions/types.RulesRes'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.RulesRes'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.ErrorRes'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/types.ErrorRes'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/types.ErrorRes'
+      summary: Update rules list
+      tags:
+      - rules
+  /api/v1/groups/{groupID}/rules/{ruleID}:
+    delete:
+      description: Deletes the requested rule
+      parameters:
+      - description: Group ID
+        in: path
+        name: groupID
+        required: true
+        type: string
+      - description: Rule ID
+        in: path
+        name: ruleID
+        required: true
+        type: string
+      - description: Save changes to the configuration file
+        in: query
+        name: save
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/types.ErrorRes'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/types.ErrorRes'
+      summary: Delete a rule
+      tags:
+      - rules
+    get:
+      description: Returns the requested rule
+      parameters:
+      - description: Group ID
+        in: path
+        name: groupID
+        required: true
+        type: string
+      - description: Rule ID
+        in: path
+        name: ruleID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.RuleRes'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/types.ErrorRes'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/types.ErrorRes'
+      summary: Get a rule
+      tags:
+      - rules
+    put:
+      consumes:
+      - application/json
+      description: Updates the requested rule
+      parameters:
+      - description: Group ID
+        in: path
+        name: groupID
+        required: true
+        type: string
+      - description: Rule ID
+        in: path
+        name: ruleID
+        required: true
+        type: string
+      - description: Save changes to the configuration file
+        in: query
+        name: save
+        type: boolean
+      - description: Request body
+        in: body
+        name: json
+        required: true
+        schema:
+          $ref: '#/definitions/types.RuleReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.RuleRes'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.ErrorRes'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/types.ErrorRes'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/types.ErrorRes'
+      summary: Update a rule
+      tags:
+      - rules
+  /api/v1/system/config/save:
+    post:
+      description: Saves the current configuration to persistent storage
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/types.ErrorRes'
+      summary: Save configuration
+      tags:
+      - config
+  /api/v1/system/hooks/netfilterd:
+    post:
+      consumes:
+      - application/json
+      description: Emits a netfilter.d event hook
+      parameters:
+      - description: Request body
+        in: body
+        name: json
+        required: true
+        schema:
+          $ref: '#/definitions/types.NetfilterDHookReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.ErrorRes'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/types.ErrorRes'
+      summary: netfilter.d event hook
+      tags:
+      - hooks
+  /api/v1/system/interfaces:
+    get:
+      description: Returns the list of interfaces
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.InterfacesRes'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/types.ErrorRes'
+      summary: Get interfaces list
+      tags:
+      - config
+swagger: "2.0"

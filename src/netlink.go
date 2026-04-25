@@ -1,0 +1,60 @@
+package routex
+
+import (
+	"fmt"
+	"net"
+	"slices"
+
+	"routex/constant"
+
+	"github.com/rs/zerolog/log"
+	"github.com/vishvananda/netlink"
+	"golang.org/x/sys/unix"
+)
+
+func subscribeLinkUpdates() (chan netlink.LinkUpdate, chan struct{}, error) {
+	linkUpdateChannel := make(chan netlink.LinkUpdate)
+	done := make(chan struct{})
+	if err := netlink.LinkSubscribe(linkUpdateChannel, done); err != nil {
+		return nil, nil, fmt.Errorf("bağlantı güncellemelerine abone olunamadı: %w", err)
+	}
+	return linkUpdateChannel, done, nil
+}
+
+// handleLink handles network interface state change events
+func (a *App) handleLink(event netlink.LinkUpdate) {
+	switch event.Header.Type {
+	case unix.RTM_NEWLINK:
+		linkAttrs := event.Link.Attrs()
+		if linkAttrs.Flags&net.FlagUp == 0 {
+			break
+		}
+
+		ifaceName := linkAttrs.Name
+		if !slices.Contains(constant.IgnoredInterfaces, ifaceName) {
+			log.Debug().
+				Str("interface", ifaceName).
+				Int("type", int(event.Header.Type)).
+				Msg("interface up")
+		}
+
+		for _, group := range a.groups {
+			if group.Interface != ifaceName {
+				continue
+			}
+
+			if err := group.LinkUpHook(event); err != nil {
+				log.Error().
+					Err(err).
+					Str("group", group.ID.String()).
+					Msg("error while handling interface up")
+			}
+		}
+
+	case unix.RTM_DELLINK:
+		log.Debug().
+			Str("interface", event.Link.Attrs().Name).
+			Int("type", int(event.Header.Type)).
+			Msg("interface del")
+	}
+}

@@ -1,0 +1,171 @@
+package components
+
+import (
+	"fmt"
+	"routex/models"
+)
+
+var ruleTypeLabels = map[string]string{
+	"domain":    "Alan Adı",
+	"namespace": "Ad Alanı",
+	"wildcard":  "Joker",
+	"regex":     "Düzenli İfade",
+	"subnet":    "Alt Ağ",
+	"subnet6":   "Alt Ağ6",
+}
+
+templ RuleRow(groupID string, rule *models.Rule) {
+	<div
+		id={ fmt.Sprintf("rule-%s", rule.ID.String()) }
+		style="display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0.75rem;border-bottom:1px solid var(--border-light);font-size:0.875rem"
+		x-data="{ editingRule: false }"
+	>
+		<template x-if="!editingRule">
+			<div style="display:flex;align-items:center;gap:0.75rem;width:100%">
+				<div
+					style={ ruleEnabledStyle(rule.Enable) }
+				></div>
+				<span
+					style="font-size:0.7rem;padding:0.1rem 0.4rem;border-radius:4px;background:var(--bg-light-extra);color:var(--text-2);min-width:4.5rem;text-align:center"
+				>
+					{ ruleTypeLabel(rule.Type) }
+				</span>
+				<span style="flex:1;font-family:var(--font-mono);word-break:break-all">
+					{ rule.Rule }
+				</span>
+				if rule.Name != "" {
+					<span style="color:var(--text-2);font-size:0.8rem;max-width:12rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+						{ rule.Name }
+					</span>
+				}
+				<div style="display:flex;align-items:center;gap:0.25rem;flex-shrink:0">
+					<button
+						class="btn btn-ghost"
+						style="font-size:0.65rem;padding:0.1rem 0.25rem;line-height:1"
+						hx-post={ fmt.Sprintf("/htmx/groups/%s/rules/%s/move/up", groupID, rule.ID.String()) }
+						hx-target={ fmt.Sprintf("#group-%s", groupID) }
+						hx-swap="outerHTML"
+						title="Yukarı taşı"
+					>&#9650;</button>
+					<button
+						class="btn btn-ghost"
+						style="font-size:0.65rem;padding:0.1rem 0.25rem;line-height:1"
+						hx-post={ fmt.Sprintf("/htmx/groups/%s/rules/%s/move/down", groupID, rule.ID.String()) }
+						hx-target={ fmt.Sprintf("#group-%s", groupID) }
+						hx-swap="outerHTML"
+						title="Aşağı taşı"
+					>&#9660;</button>
+					<button
+						class="btn btn-ghost"
+						style="font-size:0.75rem;padding:0.2rem 0.4rem"
+						@click.stop="editingRule = true"
+					>
+						Düzenle
+					</button>
+					<button
+						class="btn btn-danger"
+						style="font-size:0.75rem;padding:0.2rem 0.4rem"
+						hx-delete={ fmt.Sprintf("/htmx/groups/%s/rules/%s", groupID, rule.ID.String()) }
+						hx-target={ fmt.Sprintf("#rule-%s", rule.ID.String()) }
+						hx-swap="outerHTML"
+						hx-confirm="Bu kuralı silmek istediğinize emin misiniz?"
+					>
+						Sil
+					</button>
+				</div>
+			</div>
+		</template>
+		<template x-if="editingRule">
+			@RuleEditForm(groupID, rule)
+		</template>
+	</div>
+}
+
+templ RuleEditForm(groupID string, rule *models.Rule) {
+	<form
+		hx-put={ fmt.Sprintf("/htmx/groups/%s/rules/%s", groupID, rule.ID.String()) }
+		hx-target={ fmt.Sprintf("#rule-%s", rule.ID.String()) }
+		hx-swap="outerHTML"
+		style="width:100%"
+	>
+		<div style="display:grid;grid-template-columns:auto 1fr auto auto;gap:0.5rem;align-items:end">
+			<div>
+				<label style="display:block;font-size:0.7rem;color:var(--text-2);margin-bottom:0.15rem">Tür</label>
+				<select name="type" style="font-size:0.8rem;padding:0.3rem 0.4rem">
+					<option value="namespace" selected?={ rule.Type == "namespace" }>Ad Alanı</option>
+					<option value="wildcard" selected?={ rule.Type == "wildcard" }>Joker</option>
+					<option value="domain" selected?={ rule.Type == "domain" }>Alan Adı</option>
+					<option value="regex" selected?={ rule.Type == "regex" }>Düzenli İfade</option>
+					<option value="subnet" selected?={ rule.Type == "subnet" }>Alt Ağ</option>
+					<option value="subnet6" selected?={ rule.Type == "subnet6" }>Alt Ağ6</option>
+				</select>
+			</div>
+			<div>
+				<label style="display:block;font-size:0.7rem;color:var(--text-2);margin-bottom:0.15rem">Desen</label>
+				<input type="text" name="rule" value={ rule.Rule } required style="width:100%;font-size:0.8rem;padding:0.3rem 0.4rem;font-family:var(--font-mono)"/>
+			</div>
+			<div>
+				<label style="display:block;font-size:0.7rem;color:var(--text-2);margin-bottom:0.15rem">Ad</label>
+				<input type="text" name="name" value={ rule.Name } style="width:100%;font-size:0.8rem;padding:0.3rem 0.4rem"/>
+			</div>
+			<div style="display:flex;align-items:center;gap:0.25rem">
+				<input type="checkbox" name="enable" checked?={ rule.Enable }/>
+				<button type="submit" class="btn btn-primary" style="font-size:0.75rem;padding:0.25rem 0.5rem">Kaydet</button>
+				<button type="button" class="btn btn-ghost" style="font-size:0.75rem;padding:0.25rem 0.5rem" @click="editingRule = false">İptal</button>
+			</div>
+		</div>
+	</form>
+}
+
+templ NewRuleRow(groupID string) {
+	<div
+		id={ fmt.Sprintf("new-rule-%s", groupID) }
+		style="display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0.75rem;border-bottom:1px solid var(--border-light);font-size:0.875rem"
+	>
+		<form
+			hx-post={ fmt.Sprintf("/htmx/groups/%s/rules/create", groupID) }
+			hx-target={ fmt.Sprintf("#new-rule-%s", groupID) }
+			hx-swap="outerHTML"
+			style="width:100%"
+		>
+			<div style="display:grid;grid-template-columns:auto 1fr auto auto;gap:0.5rem;align-items:end">
+				<div>
+					<label style="display:block;font-size:0.7rem;color:var(--text-2);margin-bottom:0.15rem">Tür</label>
+					<select name="type" style="font-size:0.8rem;padding:0.3rem 0.4rem">
+						<option value="namespace" selected>Ad Alanı</option>
+						<option value="wildcard">Joker</option>
+						<option value="domain">Alan Adı</option>
+						<option value="regex">Düzenli İfade</option>
+						<option value="subnet">Alt Ağ</option>
+						<option value="subnet6">Alt Ağ6</option>
+					</select>
+				</div>
+				<div>
+					<label style="display:block;font-size:0.7rem;color:var(--text-2);margin-bottom:0.15rem">Desen</label>
+					<input type="text" name="rule" required style="width:100%;font-size:0.8rem;padding:0.3rem 0.4rem;font-family:var(--font-mono)" autofocus/>
+				</div>
+				<div>
+					<label style="display:block;font-size:0.7rem;color:var(--text-2);margin-bottom:0.15rem">Ad</label>
+					<input type="text" name="name" style="width:100%;font-size:0.8rem;padding:0.3rem 0.4rem"/>
+				</div>
+				<div style="display:flex;align-items:center;gap:0.25rem">
+					<button type="submit" class="btn btn-primary" style="font-size:0.75rem;padding:0.25rem 0.5rem">Ekle</button>
+				</div>
+			</div>
+		</form>
+	</div>
+}
+
+func ruleTypeLabel(t string) string {
+	if label, ok := ruleTypeLabels[t]; ok {
+		return label
+	}
+	return t
+}
+
+func ruleEnabledStyle(enabled bool) string {
+	if enabled {
+		return "width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0"
+	}
+	return "width:8px;height:8px;border-radius:50%;background:var(--red-dark);flex-shrink:0"
+}

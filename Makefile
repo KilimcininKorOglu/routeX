@@ -1,0 +1,271 @@
+-include .config
+
+#
+# Environment
+#
+
+# Package info
+
+PKG_NAME := routex
+PKG_DESCRIPTION := DNS-based routing application
+PKG_LICENSE := GPL-3.0-or-later
+PKG_URL := https://magitrickle.dev
+PKG_MAINTAINER := KilimcininKorOglu
+
+ifeq ($(strip $(PKG_VERSION)),)
+	TAG := $(shell git describe --tags --abbrev=0 2> /dev/null)
+	PKG_VERSION := $(if $(TAG),$(shell echo "$(TAG)" | sed 's/-rev[0-9]*$$//'),0.0.0)
+	TAG_REVISION := $(shell echo "$(TAG)" | grep -oE 'rev[0-9]+$$' | sed 's/rev//')
+	ifneq ($(strip $(TAG_REVISION)),)
+		PKG_REVISION ?= $(TAG_REVISION)
+	endif
+
+	COMMITS_SINCE_TAG := $(shell [ -n "$(TAG)" ] && git rev-list $(TAG)..HEAD --count 2>/dev/null || echo 0)
+	ifneq ($(or $(filter-out 0,$(COMMITS_SINCE_TAG)),$(if $(TAG),,1)),)
+		PKG_VERSION_PRERELEASE := $(shell v=$(PKG_VERSION); echo $${v%.*}.$$(( $${v##*.} + 1 )) )
+		PRERELEASE_DATE := $(shell date -u +%Y%m%d%H%M%S)
+		COMMIT := $(shell git rev-parse --short HEAD)
+
+		PKG_VERSION := $(PKG_VERSION_PRERELEASE)~git$(PRERELEASE_DATE).$(COMMIT)
+	endif
+endif
+PKG_VERSION_APK := $(shell echo "$(PKG_VERSION)" | sed -E 's/~git([0-9]+)\.[^.]+$$/_pre\1/')
+PKG_REVISION ?= 1
+
+# Directories
+
+BUILDS_DIR := ./.build
+STAMPS_DIR := $(BUILDS_DIR)/.stamps
+
+UNIQUE_NAME := $(PLATFORM)_$(TARGET)
+BUILD_DIR := $(BUILDS_DIR)/$(UNIQUE_NAME)
+COMPILE_DIR := $(BUILD_DIR)/compile
+
+ROOT_DIR := $(BUILD_DIR)/root
+ROOT_APK_DIR := $(BUILD_DIR)/root_apk
+BIN_DIR := $(ROOT_DIR)/bin
+ETC_DIR := $(ROOT_DIR)/etc
+LIB_DIR := $(ROOT_DIR)/lib
+USRSHARE_DIR := $(ROOT_DIR)/usr/share
+STATE_DIR := $(ROOT_DIR)/var/lib/routex
+
+ifeq ($(PLATFORM),entware)
+	BIN_DIR := $(ROOT_DIR)/opt/bin
+	ETC_DIR := $(ROOT_DIR)/opt/etc
+	LIB_DIR := $(ROOT_DIR)/opt/lib
+	USRSHARE_DIR := $(ROOT_DIR)/opt/usr/share
+	STATE_DIR := $(ROOT_DIR)/opt/var/lib/routex
+
+	GO_TAGS += entware
+	ifeq ($(filter %_kn,$(TARGET)),$(TARGET))
+		GO_TAGS += entware_kn
+	endif
+endif
+
+ifeq ($(PLATFORM),openwrt)
+	BIN_DIR := $(ROOT_DIR)/usr/bin
+	ETC_DIR := $(ROOT_DIR)/etc
+	LIB_DIR := $(ROOT_DIR)/lib
+	USRSHARE_DIR := $(ROOT_DIR)/usr/share
+	STATE_DIR := $(ROOT_DIR)/etc/routex/state
+
+	GO_TAGS += openwrt
+endif
+
+IPK_DIR := $(BUILD_DIR)/ipk
+IPK_CONTROL_DIR := $(IPK_DIR)/control
+
+APK_DIR := $(BUILD_DIR)/apk
+
+# Build properties
+
+GO_FLAGS := \
+	$(if $(GOOS),GOOS="$(GOOS)") \
+	$(if $(GOARCH),GOARCH="$(GOARCH)") \
+	$(if $(GOMIPS),GOMIPS="$(GOMIPS)") \
+	$(if $(GOARM),GOARM="$(GOARM)") \
+	$(if $(GO386),GO386="$(GO386)") \
+
+GO_PARAMS = -v -trimpath -ldflags="-X 'routex/constant.Version=$(PKG_VERSION)' -w -s" $(if $(GO_TAGS),-tags "$(GO_TAGS)")
+
+# Incremental data
+
+BACKEND_DEPENDENCIES := ./src/go.mod ./src/go.sum
+BACKEND_SOURCES := $(shell find ./src -type f -name '*.go' 2>/dev/null)
+BACKEND_SOURCES += $(BACKEND_DEPENDENCIES)
+BACKEND_BUILD_PROPERTIES := PLATFORM=$(PLATFORM) TARGET=$(TARGET) GOOS=$(GOOS) GOARCH=$(GOARCH) GOMIPS=$(GOMIPS) GOARM=$(GOARM) GO386=$(GO386) GO_TAGS=$(GO_TAGS) PKG_VERSION=$(PKG_VERSION)
+
+TEMPL_SOURCES := $(shell find ./src -type f -name '*.templ' 2>/dev/null)
+
+# Packaging data
+
+BUILD_KEY_APK_SEC ?= private-key.pem
+BUILD_KEY_APK_PUB ?= public-key.pem
+
+#
+# Targets
+#
+
+.PHONY: _return_export_dynamic_env all clear clean download download_backend redownload redownload_backend build build_backend rebuild rebuild_backend prepare_files package package_ipk FORCE
+
+all: download build package
+
+_return_export_dynamic_env:
+	@echo "COMMIT=$(COMMIT)"
+	@echo "COMMITS_SINCE_TAG=$(COMMITS_SINCE_TAG)"
+	@echo "PKG_REVISION=$(PKG_REVISION)"
+	@echo "PKG_VERSION=$(PKG_VERSION)"
+	@echo "PKG_VERSION_PRERELEASE=$(PKG_VERSION_PRERELEASE)"
+	@echo "PRERELEASE_DATE=$(PRERELEASE_DATE)"
+	@echo "TAG=$(TAG)"
+	@echo "TAG_RELEASE=$(TAG_RELEASE)"
+
+clear:
+	rm -rf "$(BUILD_DIR)"
+
+clean:
+	rm -rf "$(BUILDS_DIR)"
+
+redownload: redownload_backend
+
+download: download_backend
+
+rebuild: rebuild_backend
+
+build: build_backend
+
+# Backend
+
+$(STAMPS_DIR)/download-backend: $(BACKEND_DEPENDENCIES)
+	cd ./src && go mod tidy
+
+	@mkdir -p $(STAMPS_DIR)
+	@touch "$(STAMPS_DIR)/download-backend"
+
+download_backend: $(STAMPS_DIR)/download-backend
+
+redownload_backend:
+	@rm -f "$(STAMPS_DIR)/download-backend"
+	PKG_VERSION=$(PKG_VERSION) $(MAKE) download_backend
+
+$(STAMPS_DIR)/build-properties-backend-$(UNIQUE_NAME): FORCE
+	@mkdir -p $(STAMPS_DIR)
+	@echo "$(BACKEND_BUILD_PROPERTIES)" | cmp -s - $@ || echo "$(BACKEND_BUILD_PROPERTIES)" > $@
+
+$(STAMPS_DIR)/build-backend-$(UNIQUE_NAME): $(STAMPS_DIR)/download-backend $(BACKEND_SOURCES) $(TEMPL_SOURCES) $(STAMPS_DIR)/build-properties-backend-$(UNIQUE_NAME)
+	mkdir -p "$(COMPILE_DIR)"
+	cd ./src && templ generate
+	cd ./src && $(GO_FLAGS) go build $(GO_PARAMS) -o "../$(COMPILE_DIR)/routexd" ./cmd/routexd
+ifneq ($(filter $(GOARCH),riscv64 mips64 mips64le loong64),$(GOARCH))
+	upx -9 --lzma "$(COMPILE_DIR)/routexd"
+endif
+
+	@mkdir -p $(STAMPS_DIR)
+	@touch "$(STAMPS_DIR)/build-backend-$(UNIQUE_NAME)"
+
+build_backend: $(STAMPS_DIR)/build-backend-$(UNIQUE_NAME)
+
+rebuild_backend:
+	@rm -f "$(STAMPS_DIR)/build-backend"
+	PKG_VERSION=$(PKG_VERSION) $(MAKE) build_backend
+
+# Packaging
+
+define _copy_files
+	if [ -d $(1)/_ipk/control ]; then mkdir -p $(IPK_CONTROL_DIR); cp -r $(1)/_ipk/control/* $(IPK_CONTROL_DIR); fi
+	if [ -d $(1)/_apk ]; then mkdir -p $(APK_DIR); cp -r $(1)/_apk/* $(APK_DIR); fi
+	if [ -d $(1)/bin ]; then mkdir -p $(BIN_DIR); cp -r $(1)/bin/* $(BIN_DIR); fi
+	if [ -d $(1)/etc ]; then mkdir -p $(ETC_DIR); cp -r $(1)/etc/* $(ETC_DIR); fi
+	if [ -d $(1)/lib ]; then mkdir -p $(LIB_DIR); cp -r $(1)/lib/* $(LIB_DIR); fi
+	if [ -d $(1)/usr/share ]; then mkdir -p $(USRSHARE_DIR); cp -r $(1)/usr/share/* $(USRSHARE_DIR); fi
+	if [ -d $(1)/var/lib/routex ]; then mkdir -p $(STATE_DIR); cp -r $(1)/var/lib/routex/* $(STATE_DIR); fi
+endef
+
+prepare_files: build
+	rm -rf "$(ROOT_DIR)"
+	mkdir -p "$(BIN_DIR)"
+	cp "$(COMPILE_DIR)/routexd" "$(BIN_DIR)/routexd"
+	$(call _copy_files,./files/common)
+	$(if $(filter entware,$(PLATFORM)), $(call _copy_files,./files/entware))
+	$(if $(filter entware,$(PLATFORM)), $(if $(filter %_kn,$(TARGET)), $(call _copy_files,./files/entware_kn)))
+	$(if $(filter openwrt,$(PLATFORM)), $(call _copy_files,./files/openwrt))
+
+$(BUILD_KEY_APK_SEC):
+	openssl ecparam -name prime256v1 -genkey -noout -out $(BUILD_KEY_APK_SEC)
+
+$(BUILD_KEY_APK_PUB): $(BUILD_KEY_APK_SEC)
+	openssl ec -in $(BUILD_KEY_APK_SEC) -pubout > $(BUILD_KEY_APK_PUB)
+
+package:
+ifeq ($(PLATFORM),openwrt)
+	PKG_VERSION=$(PKG_VERSION) PKG_REVISION=$(PKG_REVISION) $(MAKE) package_ipk
+	PKG_VERSION=$(PKG_VERSION) PKG_REVISION=$(PKG_REVISION) $(MAKE) package_apk
+endif
+ifeq ($(PLATFORM),entware)
+	PKG_VERSION=$(PKG_VERSION) PKG_REVISION=$(PKG_REVISION) $(MAKE) package_ipk
+endif
+
+package_ipk: prepare_files
+	mkdir -p "$(IPK_DIR)"
+	echo '2.0' > $(IPK_DIR)/debian-binary
+
+	mkdir -p $(IPK_CONTROL_DIR)
+	echo 'Package: $(PKG_NAME)' > $(IPK_CONTROL_DIR)/control
+	echo 'Version: $(PKG_VERSION)-$(PKG_REVISION)' >> $(IPK_CONTROL_DIR)/control
+	echo 'Architecture: $(TARGET)' >> $(IPK_CONTROL_DIR)/control
+	echo 'License: $(PKG_LICENSE)' >> $(IPK_CONTROL_DIR)/control
+	echo 'URL: $(PKG_URL)' >> $(IPK_CONTROL_DIR)/control
+	echo 'Maintainer: $(PKG_MAINTAINER)' >> $(IPK_CONTROL_DIR)/control
+	echo 'Description: $(PKG_DESCRIPTION)' >> $(IPK_CONTROL_DIR)/control
+	echo 'Section: net' >> $(IPK_CONTROL_DIR)/control
+	echo 'Priority: optional' >> $(IPK_CONTROL_DIR)/control
+ifeq ($(PLATFORM),entware)
+	@DEPS="libc, iptables"; \
+	if echo "$(TARGET)" | grep -q '_kn$$'; then \
+		DEPS="$$DEPS, socat"; \
+	fi; \
+	echo "Depends: $$DEPS" >> $(IPK_CONTROL_DIR)/control
+endif
+ifeq ($(PLATFORM),openwrt)
+	echo "Depends: libc, iptables-nft, iptables-mod-conntrack-extra, kmod-ipt-nat, kmod-ipt-ipset, ip6tables-nft" >> $(IPK_CONTROL_DIR)/control
+endif
+
+	tar -C "$(IPK_CONTROL_DIR)" -czvf "$(IPK_DIR)/control.tar.gz" --owner=0 --group=0 .
+	tar -C "$(ROOT_DIR)" -czvf "$(IPK_DIR)/data.tar.gz" --owner=0 --group=0 .
+	tar -C "$(IPK_DIR)" -czvf "$(BUILDS_DIR)/$(PKG_NAME)_$(PKG_VERSION)-$(PKG_REVISION)_$(UNIQUE_NAME).ipk" --owner=0 --group=0 ./debian-binary ./control.tar.gz ./data.tar.gz
+
+package_apk: prepare_files $(BUILD_KEY_APK_SEC)
+	rm -rf $(ROOT_APK_DIR)
+	mkdir -p $(ROOT_APK_DIR)
+	cp -r $(ROOT_DIR)/. $(ROOT_APK_DIR)/
+
+	mkdir -p $(ROOT_APK_DIR)/lib/apk/packages
+	if [ -f $(APK_DIR)/conffiles ]; then \
+		cp $(APK_DIR)/conffiles $(ROOT_APK_DIR)/lib/apk/packages/$(PKG_NAME).conffiles; \
+		for file in $$(cat $(ROOT_APK_DIR)/lib/apk/packages/$(PKG_NAME).conffiles); do \
+			[ -f $(ROOT_APK_DIR)/$$file ] || continue; \
+			csum=$$(sha256sum $(ROOT_APK_DIR)/$$file | cut -d' ' -f1); \
+			echo "$$file $$csum" >> $(ROOT_APK_DIR)/lib/apk/packages/$(PKG_NAME).conffiles_static; \
+		done; \
+	fi
+	(cd $(ROOT_APK_DIR) && find . -type f,l -printf "/%P\n") > $(ROOT_APK_DIR)/lib/apk/packages/$(PKG_NAME).list
+
+	apk mkpkg \
+		-I "name:$(PKG_NAME)" \
+		-I "version:$(PKG_VERSION_APK)-r$(PKG_REVISION)" \
+		-I "description:$(PKG_DESCRIPTION)" \
+		-I "arch:$(TARGET)" \
+		-I "license:$(PKG_LICENSE)" \
+		-I "origin:feeds/packages/feeds/routex/net/$(PKG_NAME)" \
+		-I "maintainer:$(PKG_MAINTAINER)" \
+		-I "url:$(PKG_URL)" \
+		-I "provider-priority:100" \
+		-I "depends:libc iptables-nft iptables-mod-conntrack-extra kmod-ipt-nat kmod-ipt-ipset ip6tables-nft" \
+		-s "post-install:$(APK_DIR)/post-install.sh" \
+		-s "pre-deinstall:$(APK_DIR)/pre-deinstall.sh" \
+		-s "post-upgrade:$(APK_DIR)/post-upgrade.sh" \
+		-F "$(ROOT_APK_DIR)" \
+		-o "$(BUILDS_DIR)/$(PKG_NAME)_$(PKG_VERSION_APK)-r$(PKG_REVISION)_$(UNIQUE_NAME).apk" \
+		--sign "$(BUILD_KEY_APK_SEC)"
+
+FORCE:
