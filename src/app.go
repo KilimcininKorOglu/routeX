@@ -10,6 +10,7 @@ import (
 	"routex/app"
 	"routex/constant"
 	"routex/models"
+	"routex/stats"
 	"routex/subscription"
 	"routex/utils/dnsMITMProxy"
 	"routex/utils/netfilterTools"
@@ -37,12 +38,14 @@ type App struct {
 	groups       []*Group
 	dnsOverrider *netfilterTools.PortRemap
 	subManager   *subscription.Manager
+	stats        *stats.Stats
 }
 
 // New creates a new App instance
 func New() *App {
 	a := &App{
 		config: constant.DefaultAppConfig,
+		stats:  stats.New(),
 	}
 	if err := a.LoadConfig(); err != nil {
 		log.Error().Err(err).Msg("failed to load config file")
@@ -145,6 +148,49 @@ func (a *App) ListInterfaces() ([]net.Interface, error) {
 // DnsOverrider returns the dnsOverrider
 func (a *App) DnsOverrider() *netfilterTools.PortRemap {
 	return a.dnsOverrider
+}
+
+// Stats returns the stats collector
+func (a *App) Stats() *stats.Stats {
+	return a.stats
+}
+
+// GetStats returns a point-in-time snapshot of all statistics
+func (a *App) GetStats() stats.Snapshot {
+	snap := a.stats.TakeSnapshot()
+	if a.recordsCache != nil {
+		snap.CacheDomains = a.recordsCache.DomainCount()
+		snap.CacheAddresses = a.recordsCache.AddressCount()
+	}
+
+	snap.Groups = make([]stats.GroupSnapshot, len(a.groups))
+	for i, g := range a.groups {
+		model := g.Model()
+		gs := stats.GroupSnapshot{
+			ID:             model.ID.String(),
+			Name:           model.Name,
+			Color:          model.Color,
+			Interface:      model.Interface,
+			Enabled:        g.Enabled(),
+			RuleCount:      len(model.Rules),
+			MatchedDomains: g.matchedDomains.Load(),
+		}
+		for _, rule := range model.Rules {
+			if rule.IsEnabled() {
+				gs.ActiveRules++
+			}
+		}
+		if g.Enabled() {
+			if v4, err := g.ListIPv4Subnets(); err == nil {
+				gs.IPv4Entries = len(v4)
+			}
+			if v6, err := g.ListIPv6Subnets(); err == nil {
+				gs.IPv6Entries = len(v6)
+			}
+		}
+		snap.Groups[i] = gs
+	}
+	return snap
 }
 
 // SubscriptionManager returns the subscription manager

@@ -222,6 +222,29 @@ func (r *Records) StartCleanup(ctx context.Context, interval time.Duration) {
 	}()
 }
 
+func (r *Records) DomainCount() int {
+	r.locker.RLock()
+	defer r.locker.RUnlock()
+	domains := make(map[string]struct{}, len(r.addresses)+len(r.aliases))
+	for name := range r.addresses {
+		domains[name] = struct{}{}
+	}
+	for name := range r.aliases {
+		domains[name] = struct{}{}
+	}
+	return len(domains)
+}
+
+func (r *Records) AddressCount() int {
+	r.locker.RLock()
+	defer r.locker.RUnlock()
+	count := 0
+	for _, addrs := range r.addresses {
+		count += len(addrs)
+	}
+	return count
+}
+
 func New() *Records {
 	return &Records{
 		addresses:      make(map[string][]*Address),

@@ -106,6 +106,12 @@ templ AppShell(activeTab string, loc *i18n.Localizer) {
 				>
 					{ loc.T("tab.settings") }
 				</a>
+				<a
+					href="/stats"
+					class={ "tab", templ.KV("active", activeTab == "stats") }
+				>
+					{ loc.T("tab.stats") }
+				</a>
 			</div>
 			<div id="tab-content">
 				{ children... }

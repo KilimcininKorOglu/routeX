@@ -21,9 +21,10 @@ type Group struct {
 	enabled atomic.Bool
 	locker  sync.Mutex
 
-	app         *App
-	ipset       *netfilterTools.IPSet
-	ipsetToLink *netfilterTools.IPSetToLink
+	app            *App
+	ipset          *netfilterTools.IPSet
+	ipsetToLink    *netfilterTools.IPSetToLink
+	matchedDomains atomic.Uint64
 }
 
 func (g *Group) Enabled() bool {

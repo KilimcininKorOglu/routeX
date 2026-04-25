@@ -608,6 +608,12 @@ func (h *Handler) GetSubscriptionStatus(w http.ResponseWriter, r *http.Request) 
 	utils.WriteJson(w, http.StatusOK, status)
 }
 
+// GetStats returns application statistics
+func (h *Handler) GetStats(w http.ResponseWriter, r *http.Request) {
+	snap := h.app.GetStats()
+	utils.WriteJson(w, http.StatusOK, snap)
+}
+
 func subscriptionStatusFromMeta(meta *subscription.Metadata) types.SubscriptionStatus {
 	var lastUpdated string
 	if !meta.LastUpdated.IsZero() {

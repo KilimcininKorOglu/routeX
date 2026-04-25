@@ -101,6 +101,18 @@ func (h *Handler) Settings(w http.ResponseWriter, r *http.Request) {
 	pages.Settings(h.app.Config(), loc).Render(r.Context(), w)
 }
 
+func (h *Handler) StatsPage(w http.ResponseWriter, r *http.Request) {
+	loc := i18n.FromContext(r.Context())
+	snap := h.app.GetStats()
+	pages.StatsPage(snap, loc).Render(r.Context(), w)
+}
+
+func (h *Handler) HtmxGetStats(w http.ResponseWriter, r *http.Request) {
+	loc := i18n.FromContext(r.Context())
+	snap := h.app.GetStats()
+	pages.StatsContent(snap, loc).Render(r.Context(), w)
+}
+
 func (h *Handler) getInterfaces() []string {
 	ifaces, err := h.app.ListInterfaces()
 	if err != nil {

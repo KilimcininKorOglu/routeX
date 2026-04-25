@@ -38,6 +38,7 @@ func (a *App) Start(ctx context.Context) (err error) {
 	}()
 
 	a.setupLogging()
+	a.stats.StartedAt = time.Now()
 
 	a.dnsMITM = dnsMITMProxy.NewDNSMITMProxy(
 		net.JoinHostPort(a.config.DNSProxy.Upstream.Address, strconv.Itoa(int(a.config.DNSProxy.Upstream.Port))),

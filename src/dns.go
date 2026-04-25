@@ -69,6 +69,16 @@ func (a *App) dnsRequestHook(clientAddr net.Addr, reqMsg dns.Msg, network string
 		Msg("request received")
 
 	for _, q := range reqMsg.Question {
+		switch q.Qtype {
+		case dns.TypeA:
+			a.stats.QueriesA.Add(1)
+		case dns.TypeAAAA:
+			a.stats.QueriesAAAA.Add(1)
+		case dns.TypePTR:
+			a.stats.QueriesPTR.Add(1)
+		default:
+			a.stats.QueriesOther.Add(1)
+		}
 		log.Info().
 			Str("id", idStr).
 			Str("name", q.Name).
@@ -84,6 +94,7 @@ func (a *App) dnsRequestHook(clientAddr net.Addr, reqMsg dns.Msg, network string
 	}
 
 	if len(reqMsg.Question) == 1 && reqMsg.Question[0].Qtype == dns.TypePTR {
+		a.stats.FakePTRResponses.Add(1)
 		respMsg := &dns.Msg{
 			MsgHdr: dns.MsgHdr{
 				Id:                 reqMsg.Id,
@@ -102,6 +113,7 @@ func (a *App) dnsRequestHook(clientAddr net.Addr, reqMsg dns.Msg, network string
 // dnsResponseHook handles DNS responses
 func (a *App) dnsResponseHook(clientAddr net.Addr, reqMsg dns.Msg, respMsg dns.Msg, network string) (*dns.Msg, error) {
 	defer a.handleMessage(respMsg, clientAddr, network)
+	a.stats.Responses.Add(1)
 
 	if a.config.DNSProxy.DisableDropAAAA {
 		return nil, nil
@@ -112,6 +124,8 @@ func (a *App) dnsResponseHook(clientAddr net.Addr, reqMsg dns.Msg, respMsg dns.M
 	for _, answer := range respMsg.Answer {
 		if answer.Header().Rrtype != dns.TypeAAAA {
 			filteredAnswers = append(filteredAnswers, answer)
+		} else {
+			a.stats.DroppedAAAA.Add(1)
 		}
 	}
 	respMsg.Answer = filteredAnswers
@@ -211,6 +225,9 @@ func (a *App) processARecord(aRecord dns.A, idStr, clientAddrStr, network string
 						Msg("added subnet")
 				}
 
+				group.matchedDomains.Add(1)
+				a.stats.MatchedRoutes.Add(1)
+
 				log.Info().
 					Str("name", domainName).
 					Str("address", addrStr).
@@ -282,6 +299,9 @@ func (a *App) processAAAARecord(aaaaRecord dns.AAAA, idStr, clientAddrStr, netwo
 						Msg("added subnet")
 				}
 
+				group.matchedDomains.Add(1)
+				a.stats.MatchedRoutes.Add(1)
+
 				log.Info().
 					Str("name", domainName).
 					Str("address", addrStr).
@@ -325,6 +345,9 @@ func (a *App) processCNameRecord(cNameRecord dns.CNAME, idStr, clientAddrStr, ne
 				if !domain.IsMatch(alias) {
 					continue
 				}
+
+				group.matchedDomains.Add(1)
+				a.stats.MatchedRoutes.Add(1)
 
 				log.Info().
 					Str("name", domainName).

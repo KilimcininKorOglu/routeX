@@ -6,6 +6,7 @@ import (
 
 	"routex/config"
 	"routex/models"
+	"routex/stats"
 	"routex/subscription"
 	"routex/utils/netfilterTools"
 
@@ -22,6 +23,7 @@ type Main interface {
 	ListInterfaces() ([]net.Interface, error)
 	DnsOverrider() *netfilterTools.PortRemap
 	SubscriptionManager() *subscription.Manager
+	GetStats() stats.Snapshot
 	LoadConfig() error
 	SaveConfig() error
 	BackupConfig() error

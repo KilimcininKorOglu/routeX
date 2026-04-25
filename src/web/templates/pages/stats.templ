@@ -1,0 +1,105 @@
+package pages
+
+import (
+	"fmt"
+	"routex/i18n"
+	"routex/stats"
+	"routex/web/templates"
+)
+
+templ StatsPage(snap stats.Snapshot, loc *i18n.Localizer) {
+	@templates.AppShell("stats", loc) {
+		<div id="stats-content"
+			hx-get="/htmx/stats"
+			hx-trigger="every 5s"
+			hx-swap="innerHTML">
+			@StatsContent(snap, loc)
+		</div>
+	}
+}
+
+templ StatsContent(snap stats.Snapshot, loc *i18n.Localizer) {
+	<div class="card" style="display:flex;align-items:center;gap:12px;padding:12px 16px;margin-bottom:24px">
+		<div>
+			<div style="font-size:13px;color:#8a8a8a">{ loc.T("stats.uptime") }</div>
+			<div style="font-size:16px;font-weight:600">{ snap.Uptime }</div>
+		</div>
+	</div>
+
+	<h3 class="section-title">{ loc.T("stats.section_dns") }</h3>
+	<div class="stats-grid">
+		@statCard(loc.T("stats.total_queries"), fmtU64(snap.TotalQueries), "#107C10")
+		@statCard(loc.T("stats.total_responses"), fmtU64(snap.TotalResponses), "#0078d4")
+		@statCard(loc.T("stats.fake_ptr"), fmtU64(snap.FakePTRResponses), "#f7630c")
+		@statCard(loc.T("stats.dropped_aaaa"), fmtU64(snap.DroppedAAAA), "#e81123")
+	</div>
+
+	<h3 class="section-title">{ loc.T("stats.section_queries") }</h3>
+	<div class="stats-grid">
+		@statCard("A", fmtU64(snap.QueriesA), "#107C10")
+		@statCard("AAAA", fmtU64(snap.QueriesAAAA), "#0078d4")
+		@statCard("PTR", fmtU64(snap.QueriesPTR), "#f7630c")
+		@statCard(loc.T("stats.other"), fmtU64(snap.QueriesOther), "#8a8a8a")
+	</div>
+
+	<h3 class="section-title">{ loc.T("stats.section_cache") }</h3>
+	<div class="stats-grid">
+		@statCard(loc.T("stats.cache_domains"), fmtInt(snap.CacheDomains), "#0078d4")
+		@statCard(loc.T("stats.cache_addresses"), fmtInt(snap.CacheAddresses), "#107C10")
+		@statCard(loc.T("stats.matched_routes"), fmtU64(snap.MatchedRoutes), "#10B910")
+	</div>
+
+	<h3 class="section-title">{ loc.T("stats.section_groups") }</h3>
+	for _, g := range snap.Groups {
+		@groupStatCard(g, loc)
+	}
+}
+
+templ statCard(label string, value string, accentColor string) {
+	<div class="card" style="text-align:center">
+		<div style={ fmt.Sprintf("font-size:24px;font-weight:700;color:%s;font-family:var(--font-mono)", accentColor) }>
+			{ value }
+		</div>
+		<div style="font-size:12px;color:#8a8a8a;margin-top:4px">{ label }</div>
+	</div>
+}
+
+templ groupStatCard(g stats.GroupSnapshot, loc *i18n.Localizer) {
+	<div class="card" style="margin-bottom:8px">
+		<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+			<span style={ fmt.Sprintf("width:10px;height:10px;border-radius:50%%;background:%s;display:inline-block", g.Color) }></span>
+			<span style="font-weight:600">{ g.Name }</span>
+			<span style="font-size:12px;color:#8a8a8a;margin-left:auto">{ g.Interface }</span>
+		</div>
+		<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;font-size:12px">
+			<div>
+				<div style="color:#8a8a8a">{ loc.T("stats.group_rules") }</div>
+				<div style="font-family:var(--font-mono)">{ fmtActiveRules(g) }</div>
+			</div>
+			<div>
+				<div style="color:#8a8a8a">{ loc.T("stats.group_matches") }</div>
+				<div style="font-family:var(--font-mono)">{ fmtU64(g.MatchedDomains) }</div>
+			</div>
+			<div>
+				<div style="color:#8a8a8a">IPv4</div>
+				<div style="font-family:var(--font-mono)">{ fmtInt(g.IPv4Entries) }</div>
+			</div>
+			<div>
+				<div style="color:#8a8a8a">IPv6</div>
+				<div style="font-family:var(--font-mono)">{ fmtInt(g.IPv6Entries) }</div>
+			</div>
+		</div>
+	</div>
+}
+
+func fmtU64(v uint64) string {
+	return fmt.Sprintf("%d", v)
+}
+
+func fmtInt(v int) string {
+	return fmt.Sprintf("%d", v)
+}
+
+func fmtActiveRules(g stats.GroupSnapshot) string {
+	return fmt.Sprintf("%d / %d", g.ActiveRules, g.RuleCount)
+}
