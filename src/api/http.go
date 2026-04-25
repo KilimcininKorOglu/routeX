@@ -31,10 +31,16 @@ func SetupHTTP(a app.Main, errChan chan error) (*http.Server, error) {
 	r := chi.NewRouter()
 	r.Use(middleware.Recoverer)
 
+	loginLimiter := auth.LoginRateLimitMiddleware()
+
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if !strings.HasPrefix(r.URL.Path, "/api/") {
 				next.ServeHTTP(w, r)
+				return
+			}
+			if r.URL.Path == "/api/v1/auth" && r.Method == http.MethodPost {
+				loginLimiter(next).ServeHTTP(w, r)
 				return
 			}
 			if !a.Config().HTTPWeb.Auth.Enabled || r.URL.Path == "/api/v1/auth" {
@@ -52,7 +58,7 @@ func SetupHTTP(a app.Main, errChan chan error) (*http.Server, error) {
 	h := web.NewHandler(a)
 
 	r.Get("/login", h.LoginPage)
-	r.Post("/login", h.LoginSubmit)
+	r.With(loginLimiter).Post("/login", h.LoginSubmit)
 	r.Get("/logout", h.Logout)
 
 	r.Group(func(r chi.Router) {
