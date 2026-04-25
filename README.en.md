@@ -113,7 +113,7 @@ sub.example.com         not matched
 
 ## Web Interface
 
-After installation, the web interface is available at `http://<router-ip>:8080` by default. Authentication is enabled by default; log in using your router's system credentials:
+After installation, the web interface is available at `http://<router-ip>:7080` by default. Authentication is enabled by default; log in using your router's system credentials:
 
 | Platform           | Username | Password Source   |
 |:-------------------|:---------|:------------------|

@@ -25,7 +25,7 @@ var DefaultAppConfig = models.AppConfig{
 		},
 		Host: models.AppConfigHTTPWebServer{
 			Address: "[::]",
-			Port:    8080,
+			Port:    7080,
 		},
 		Skin:     "default",
 		Language: "en",

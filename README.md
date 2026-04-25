@@ -115,7 +115,7 @@ sub.example.com         eşleşmez
 
 ## Web Arayüzü
 
-Kurulumdan sonra varsayılan olarak `http://<yönlendirici-ip>:8080` adresinden erişebilirsiniz. Kimlik doğrulama varsayılan olarak açıktır; giriş için yönlendiricinin sistem kullanıcı bilgileri kullanılır:
+Kurulumdan sonra varsayılan olarak `http://<yönlendirici-ip>:7080` adresinden erişebilirsiniz. Kimlik doğrulama varsayılan olarak açıktır; giriş için yönlendiricinin sistem kullanıcı bilgileri kullanılır:
 
 | Platform           | Kullanıcı Adı | Şifre Kaynağı     |
 |:-------------------|:--------------|:------------------|
