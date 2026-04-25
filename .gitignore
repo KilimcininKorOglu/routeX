@@ -4,3 +4,5 @@
 private-key.pem
 public-key.pem
 src/web/templates/**/*_templ.go
+src/routexd
+src/magitrickled

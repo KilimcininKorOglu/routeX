@@ -1,4 +1,0 @@
-
-config magitrickle 'main'
-        option enabled '1'
-        option user 'root'

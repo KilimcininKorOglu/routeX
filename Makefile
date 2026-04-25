@@ -9,7 +9,7 @@
 PKG_NAME := routex
 PKG_DESCRIPTION := DNS-based routing application
 PKG_LICENSE := GPL-3.0-or-later
-PKG_URL := https://magitrickle.dev
+PKG_URL := https://github.com/KilimcininKorOglu/routeX
 PKG_MAINTAINER := KilimcininKorOglu
 
 ifeq ($(strip $(PKG_VERSION)),)
@@ -137,6 +137,7 @@ build: build_backend
 # Backend
 
 $(STAMPS_DIR)/download-backend: $(BACKEND_DEPENDENCIES)
+	cd ./src && templ generate
 	cd ./src && go mod tidy
 
 	@mkdir -p $(STAMPS_DIR)

@@ -1,0 +1,4 @@
+
+config routex 'main'
+        option enabled '1'
+        option user 'root'

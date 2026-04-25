@@ -1,5 +1,5 @@
 #!/bin/sh
 
-/opt/etc/init.d/S99magitrickle restart
+/opt/etc/init.d/S99routex restart
 
 exit 0
