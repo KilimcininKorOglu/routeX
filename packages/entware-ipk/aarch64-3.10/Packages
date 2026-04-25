@@ -1,0 +1,14 @@
+Package: routex
+Version: 1.7.2-1
+Architecture: aarch64-3.10
+License: GPL-3.0-or-later
+URL: https://github.com/KilimcininKorOglu/routeX
+Maintainer: KilimcininKorOglu
+Description: DNS-based routing application
+Section: net
+Priority: optional
+Depends: libc, iptables
+Filename: routex_1.7.2-1_entware_aarch64-3.10.ipk
+Size: 2708018
+SHA256sum: e626a3a0ae9ee766fe619e471e686a669f6239851b822c96a9a7344c768681f9
+

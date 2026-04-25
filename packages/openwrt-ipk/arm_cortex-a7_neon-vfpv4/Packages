@@ -1,0 +1,14 @@
+Package: routex
+Version: 1.7.2-1
+Architecture: arm_cortex-a7_neon-vfpv4
+License: GPL-3.0-or-later
+URL: https://github.com/KilimcininKorOglu/routeX
+Maintainer: KilimcininKorOglu
+Description: DNS-based routing application
+Section: net
+Priority: optional
+Depends: libc, iptables-nft, iptables-mod-conntrack-extra, kmod-ipt-nat, kmod-ipt-ipset, ip6tables-nft
+Filename: routex_1.7.2-1_openwrt_arm_cortex-a7_neon-vfpv4.ipk
+Size: 2717124
+SHA256sum: d5824f14122822ab8ac4c2615fd4f04a3f5284fab150bbf78c7d3a243055bc55
+

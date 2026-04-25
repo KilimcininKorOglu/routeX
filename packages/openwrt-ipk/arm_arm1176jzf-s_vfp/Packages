@@ -1,0 +1,14 @@
+Package: routex
+Version: 1.7.2-1
+Architecture: arm_arm1176jzf-s_vfp
+License: GPL-3.0-or-later
+URL: https://github.com/KilimcininKorOglu/routeX
+Maintainer: KilimcininKorOglu
+Description: DNS-based routing application
+Section: net
+Priority: optional
+Depends: libc, iptables-nft, iptables-mod-conntrack-extra, kmod-ipt-nat, kmod-ipt-ipset, ip6tables-nft
+Filename: routex_1.7.2-1_openwrt_arm_arm1176jzf-s_vfp.ipk
+Size: 2722753
+SHA256sum: 78bbb386e55964d2d810885b2665c53013bcbbf286e91a2530c43b02ee62f8d6
+

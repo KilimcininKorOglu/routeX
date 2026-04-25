@@ -1,0 +1,14 @@
+Package: routex
+Version: 1.7.2-1
+Architecture: arm_cortex-a8_vfpv3
+License: GPL-3.0-or-later
+URL: https://github.com/KilimcininKorOglu/routeX
+Maintainer: KilimcininKorOglu
+Description: DNS-based routing application
+Section: net
+Priority: optional
+Depends: libc, iptables-nft, iptables-mod-conntrack-extra, kmod-ipt-nat, kmod-ipt-ipset, ip6tables-nft
+Filename: routex_1.7.2-1_openwrt_arm_cortex-a8_vfpv3.ipk
+Size: 2717126
+SHA256sum: 237d796d0f84fc2ec5d4b8dea4e3f263ef813e13ae3da23d3873ad38c9b7e7cf
+

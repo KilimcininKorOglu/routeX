@@ -1,0 +1,14 @@
+Package: routex
+Version: 1.7.2-1
+Architecture: arm_arm926ej-s
+License: GPL-3.0-or-later
+URL: https://github.com/KilimcininKorOglu/routeX
+Maintainer: KilimcininKorOglu
+Description: DNS-based routing application
+Section: net
+Priority: optional
+Depends: libc, iptables-nft, iptables-mod-conntrack-extra, kmod-ipt-nat, kmod-ipt-ipset, ip6tables-nft
+Filename: routex_1.7.2-1_openwrt_arm_arm926ej-s.ipk
+Size: 2727486
+SHA256sum: 9e129d66bb45bd2d12eefa62b1fa18c087f3f5857622cae49b0f4c05b7f6a30e
+

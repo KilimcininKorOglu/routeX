@@ -1,0 +1,14 @@
+Package: routex
+Version: 1.7.2-1
+Architecture: x86_64
+License: GPL-3.0-or-later
+URL: https://github.com/KilimcininKorOglu/routeX
+Maintainer: KilimcininKorOglu
+Description: DNS-based routing application
+Section: net
+Priority: optional
+Depends: libc, iptables-nft, iptables-mod-conntrack-extra, kmod-ipt-nat, kmod-ipt-ipset, ip6tables-nft
+Filename: routex_1.7.2-1_openwrt_x86_64.ipk
+Size: 3176088
+SHA256sum: 76abf41cef3278a7250224eea7e4e3a976d4a72681df8467126b1158bc38b2e9
+

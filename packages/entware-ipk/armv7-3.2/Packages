@@ -1,0 +1,14 @@
+Package: routex
+Version: 1.7.2-1
+Architecture: armv7-3.2
+License: GPL-3.0-or-later
+URL: https://github.com/KilimcininKorOglu/routeX
+Maintainer: KilimcininKorOglu
+Description: DNS-based routing application
+Section: net
+Priority: optional
+Depends: libc, iptables
+Filename: routex_1.7.2-1_entware_armv7-3.2.ipk
+Size: 2721740
+SHA256sum: c71e7053eb87961b08716c8c79e256789c0e67359eb65efd3b0dbf56cf09c321
+

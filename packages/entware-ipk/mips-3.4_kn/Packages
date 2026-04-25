@@ -1,0 +1,14 @@
+Package: routex
+Version: 1.7.2-1
+Architecture: mips-3.4_kn
+License: GPL-3.0-or-later
+URL: https://github.com/KilimcininKorOglu/routeX
+Maintainer: KilimcininKorOglu
+Description: DNS-based routing application
+Section: net
+Priority: optional
+Depends: libc, iptables, socat
+Filename: routex_1.7.2-1_entware_mips-3.4_kn.ipk
+Size: 2642416
+SHA256sum: 5a320e29faeca0011478702925e580ea63f130631ffd8468597fe307517119c7
+
