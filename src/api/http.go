@@ -30,6 +30,14 @@ func SetupHTTP(a app.Main, errChan chan error) (*http.Server, error) {
 
 	r := chi.NewRouter()
 	r.Use(middleware.Recoverer)
+	r.Use(middleware.RequestSize(1 << 20)) // 1 MB
+	r.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("X-Frame-Options", "DENY")
+			w.Header().Set("X-Content-Type-Options", "nosniff")
+			next.ServeHTTP(w, r)
+		})
+	})
 
 	loginLimiter := auth.LoginRateLimitMiddleware()
 
