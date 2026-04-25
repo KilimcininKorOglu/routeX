@@ -50,7 +50,7 @@ service routex start
 **OpenWrt (apk):**
 
 ```shell
-apk update && apk add --allow-untrusted routex
+apk update && apk add routex
 service routex start
 ```
 
@@ -128,6 +128,9 @@ Through the web interface you can:
 
 - Create, edit, and delete groups
 - Add, edit, and reorder rules
+- URL-based rule subscription lists (auto-updating)
+- Real-time statistics dashboard (live updates via WebSocket)
+- Rule test tool (enter a domain to see which rules match)
 - Import and export configuration
 - Search and filter
 - View system settings
@@ -138,14 +141,54 @@ Through the web interface you can:
 | Property        | Value                                |
 |:----------------|:-------------------------------------|
 | Language        | Go 1.25                              |
-| Web Interface   | templ + htmx + Alpine.js             |
+| Web Interface   | templ + htmx + Alpine.js + WebSocket |
 | DNS Engine      | MITM proxy with miekg/dns            |
+| DNS Upstream    | Plain DNS, DoT (RFC 7858), DoH (RFC 8484) |
 | Network Control | iptables, ipset, netlink             |
 | Configuration   | YAML                                 |
 | Authentication  | JWT (enabled by default)             |
 | Localization    | Turkish, English (JSON locale files) |
-| Package Format  | .ipk (opkg) and .apk (Alpine)        |
+| Package Format  | .ipk (opkg) and .apk (Alpine, signed)|
 | License         | GPL-3.0-or-later                     |
+
+## Encrypted DNS (DoH / DoT)
+
+To send DNS queries over an encrypted channel, change the upstream protocol in the configuration file:
+
+**DNS-over-TLS (Cloudflare):**
+
+```yaml
+dnsProxy:
+  upstream:
+    address: 1.1.1.1
+    port: 853
+  protocol: dot
+  tlsServerName: cloudflare-dns.com
+```
+
+**DNS-over-HTTPS (Google):**
+
+```yaml
+dnsProxy:
+  protocol: doh
+  url: https://dns.google/dns-query
+```
+
+Supported protocols: `plain` (default), `dot`, `doh`. TLS certificate verification can be disabled with `tlsSkipVerify: true`.
+
+## Rule Subscription Lists
+
+Groups can subscribe to URL-based rule lists. Lists are updated automatically:
+
+```yaml
+groups:
+  - name: Ad Blocking
+    interface: nwg0
+    subscriptionUrl: https://example.com/block-list.txt
+    subscriptionInterval: 1440
+```
+
+Supported formats: plain text (one domain per line), hosts file (`0.0.0.0 domain`), AdGuard basic (`||domain^`). Update interval is in minutes (1440 = 24 hours).
 
 ## Building from Source
 

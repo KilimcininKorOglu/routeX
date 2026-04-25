@@ -52,7 +52,7 @@ service routex start
 **OpenWrt (apk):**
 
 ```shell
-apk update && apk add --allow-untrusted routex
+apk update && apk add routex
 service routex start
 ```
 
@@ -130,6 +130,9 @@ Web arayüzü üzerinden:
 
 - Grup oluşturma, düzenleme ve silme
 - Kural ekleme, düzenleme ve sıralama
+- URL tabanlı kural abonelik listeleri (otomatik güncelleme)
+- Gerçek zamanlı istatistik paneli (WebSocket ile canlı güncelleme)
+- Kural test aracı (domain girerek hangi kurala eşleştiğini görme)
 - Yapılandırma içeri/dışa aktarma
 - Arama ve filtreleme
 - Sistem ayarlarını görüntüleme
@@ -139,15 +142,55 @@ Web arayüzü üzerinden:
 
 | Özellik          | Değer                                  |
 |:-----------------|:---------------------------------------|
-| Dil              | Go 1.25                                |
-| Web Arayüzü      | templ + htmx + Alpine.js               |
+| Programlama Dili | Go 1.25                                |
+| Web Arayüzü      | templ + htmx + Alpine.js + WebSocket   |
 | DNS Motoru       | miekg/dns ile MITM proxy               |
+| DNS Upstream     | Düz DNS, DoT (RFC 7858), DoH (RFC 8484)|
 | Ağ Yönetimi      | iptables, ipset, netlink               |
 | Yapılandırma     | YAML                                   |
 | Kimlik Doğrulama | JWT (varsayılan olarak açık)           |
 | Çoklu Dil        | Türkçe, İngilizce (JSON dil dosyaları) |
-| Paket Formatı    | .ipk (opkg) ve .apk (Alpine)           |
+| Paket Formatı    | .ipk (opkg) ve .apk (Alpine, imzalı)  |
 | Lisans           | GPL-3.0-or-later                       |
+
+## Şifreli DNS (DoH / DoT)
+
+DNS sorgularını şifreli olarak göndermek için yapılandırma dosyasında upstream protokolünü değiştirin:
+
+**DNS-over-TLS (Cloudflare):**
+
+```yaml
+dnsProxy:
+  upstream:
+    address: 1.1.1.1
+    port: 853
+  protocol: dot
+  tlsServerName: cloudflare-dns.com
+```
+
+**DNS-over-HTTPS (Google):**
+
+```yaml
+dnsProxy:
+  protocol: doh
+  url: https://dns.google/dns-query
+```
+
+Desteklenen protokoller: `plain` (varsayılan), `dot`, `doh`. TLS sertifika doğrulaması `tlsSkipVerify: true` ile devre dışı bırakılabilir.
+
+## Kural Abonelik Listeleri
+
+Gruplar URL tabanlı kural listelerine abone olabilir. Listeler otomatik olarak güncellenir:
+
+```yaml
+groups:
+  - name: Reklam Engelleme
+    interface: nwg0
+    subscriptionUrl: https://example.com/block-list.txt
+    subscriptionInterval: 1440
+```
+
+Desteklenen formatlar: düz metin (satır başına bir domain), hosts dosyası (`0.0.0.0 domain`), AdGuard temel (`||domain^`). Güncelleme aralığı dakika cinsindendir (1440 = 24 saat).
 
 ## Derleme
 
