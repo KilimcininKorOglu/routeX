@@ -147,6 +147,6 @@ Output is written to the `.build/` directory. Building requires Go 1.23, templ, 
 
 This project is licensed under [GPL-3.0-or-later](LICENSE).
 
----
+## Attribution
 
-This project was reorganized using [https://gitlab.com/magitrickle/magitrickle](https://gitlab.com/magitrickle/magitrickle).
+This project is a fork of [MagiTrickle](https://gitlab.com/magitrickle/magitrickle), originally developed by Ponywka and contributors under the GPL-3.0-or-later license. See [CONTRIBUTORS.md](CONTRIBUTORS.md) for the full list of contributors.

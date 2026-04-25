@@ -151,6 +151,6 @@ make
 
 Bu proje [GPL-3.0-or-later](LICENSE) lisansı altında dağıtılmaktadır.
 
----
+## Atıf
 
-Bu proje, [https://gitlab.com/magitrickle/magitrickle](https://gitlab.com/magitrickle/magitrickle) adresindeki proje kullanılarak yeniden düzenlenmiştir.
+Bu proje, [MagiTrickle](https://gitlab.com/magitrickle/magitrickle) projesinin bir çatalıdır. Orijinal proje Ponywka ve katkıda bulunanlar tarafından GPL-3.0-or-later lisansı altında geliştirilmiştir. Katkıda bulunanların tam listesi [CONTRIBUTORS.md](CONTRIBUTORS.md) dosyasında yer almaktadır.
