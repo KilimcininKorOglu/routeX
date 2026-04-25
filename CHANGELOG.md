@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.7.2] - 2026-04-26
+
+### Changed
+- Default HTTP port changed from 8080 to 7080 to reduce conflicts
+- Update swagger.yaml for v1.3-1.7 API additions
+- Update READMEs for v1.3-1.7 features and APK signing
+
+### Fixed
+- Correct add_repo.sh URL in READMEs (wrong branch and case)
+
 ## [1.7.1] - 2026-04-26
 
 ### Changed
