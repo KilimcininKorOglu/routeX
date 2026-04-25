@@ -3,6 +3,20 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.6.0] - 2026-04-26
+
+### Added
+- DNS-over-HTTPS (DoH) upstream support (RFC 8484) with HTTP/2 multiplexing
+- DNS-over-TLS (DoT) upstream support (RFC 7858) with TLS connection pooling
+- Upstream interface abstraction for protocol-agnostic DNS proxy core
+- TLS configuration options: skip verification, custom server name (SNI)
+- Protocol selection in config: plain, dot, doh
+- Settings page displays upstream protocol, DoH URL, and TLS status
+
+### Changed
+- DNS MITM proxy refactored: connection pools extracted into Upstream implementations
+- Sample config updated with DoH/DoT examples for Google and Cloudflare
+
 ## [1.5.0] - 2026-04-26
 
 ### Added
