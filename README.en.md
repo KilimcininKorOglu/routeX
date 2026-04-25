@@ -138,18 +138,18 @@ Through the web interface you can:
 
 ## Technical Details
 
-| Property        | Value                                |
-|:----------------|:-------------------------------------|
-| Language        | Go 1.25                              |
-| Web Interface   | templ + htmx + Alpine.js + WebSocket |
-| DNS Engine      | MITM proxy with miekg/dns            |
+| Property        | Value                                     |
+|:----------------|:------------------------------------------|
+| Language        | Go 1.25                                   |
+| Web Interface   | templ + htmx + Alpine.js + WebSocket      |
+| DNS Engine      | MITM proxy with miekg/dns                 |
 | DNS Upstream    | Plain DNS, DoT (RFC 7858), DoH (RFC 8484) |
-| Network Control | iptables, ipset, netlink             |
-| Configuration   | YAML                                 |
-| Authentication  | JWT (enabled by default)             |
-| Localization    | Turkish, English (JSON locale files) |
-| Package Format  | .ipk (opkg) and .apk (Alpine, signed)|
-| License         | GPL-3.0-or-later                     |
+| Network Control | iptables, ipset, netlink                  |
+| Configuration   | YAML                                      |
+| Authentication  | JWT (enabled by default)                  |
+| Localization    | Turkish, English (JSON locale files)      |
+| Package Format  | .ipk (opkg) and .apk (Alpine, signed)     |
+| License         | GPL-3.0-or-later                          |
 
 ## Encrypted DNS (DoH / DoT)
 

@@ -140,18 +140,18 @@ Web arayüzü üzerinden:
 
 ## Teknik Detaylar
 
-| Özellik          | Değer                                  |
-|:-----------------|:---------------------------------------|
-| Programlama Dili | Go 1.25                                |
-| Web Arayüzü      | templ + htmx + Alpine.js + WebSocket   |
-| DNS Motoru       | miekg/dns ile MITM proxy               |
-| DNS Upstream     | Düz DNS, DoT (RFC 7858), DoH (RFC 8484)|
-| Ağ Yönetimi      | iptables, ipset, netlink               |
-| Yapılandırma     | YAML                                   |
-| Kimlik Doğrulama | JWT (varsayılan olarak açık)           |
-| Çoklu Dil        | Türkçe, İngilizce (JSON dil dosyaları) |
-| Paket Formatı    | .ipk (opkg) ve .apk (Alpine, imzalı)  |
-| Lisans           | GPL-3.0-or-later                       |
+| Özellik          | Değer                                   |
+|:-----------------|:----------------------------------------|
+| Programlama Dili | Go 1.25                                 |
+| Web Arayüzü      | templ + htmx + Alpine.js + WebSocket    |
+| DNS Motoru       | miekg/dns ile MITM proxy                |
+| DNS Upstream     | Düz DNS, DoT (RFC 7858), DoH (RFC 8484) |
+| Ağ Yönetimi      | iptables, ipset, netlink                |
+| Yapılandırma     | YAML                                    |
+| Kimlik Doğrulama | JWT (varsayılan olarak açık)            |
+| Çoklu Dil        | Türkçe, İngilizce (JSON dil dosyaları)  |
+| Paket Formatı    | .ipk (opkg) ve .apk (Alpine, imzalı)    |
+| Lisans           | GPL-3.0-or-later                        |
 
 ## Şifreli DNS (DoH / DoT)
 
