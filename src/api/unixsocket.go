@@ -25,6 +25,10 @@ func SetupUnixSocket(a app.Main, errChan chan error) (*http.Server, error) {
 	if err != nil {
 		return nil, fmt.Errorf("UNIX soket dinleme hatası: %v", err)
 	}
+	if err := os.Chmod(constant.SockPath, 0600); err != nil {
+		socket.Close()
+		return nil, fmt.Errorf("UNIX soket izinleri ayarlanamadı: %w", err)
+	}
 
 	r := chi.NewRouter()
 	r.Use(middleware.Recoverer)
