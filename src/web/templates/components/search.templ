@@ -1,11 +1,13 @@
 package components
 
-templ SearchBar() {
+import "routex/i18n"
+
+templ SearchBar(loc *i18n.Localizer) {
 	<div style="margin-bottom:1rem">
 		<input
 			type="text"
 			name="q"
-			placeholder="Grup ve kuralları ara..."
+			placeholder={ loc.T("search.placeholder") }
 			style="width:100%"
 			hx-get="/htmx/groups/search"
 			hx-trigger="input changed delay:300ms, search"

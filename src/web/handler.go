@@ -11,6 +11,7 @@ import (
 	"routex/api/auth"
 	"routex/app"
 	"routex/config"
+	"routex/i18n"
 	"routex/models"
 	"routex/utils/intID"
 	"routex/web/templates/components"
@@ -36,13 +37,16 @@ func (h *Handler) LoginPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
-	pages.Login("").Render(r.Context(), w)
+	loc := i18n.FromContext(r.Context())
+	pages.Login("", loc).Render(r.Context(), w)
 }
 
 func (h *Handler) LoginSubmit(w http.ResponseWriter, r *http.Request) {
+	loc := i18n.FromContext(r.Context())
+
 	if err := r.ParseForm(); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		pages.Login("Geçersiz form verisi").Render(r.Context(), w)
+		pages.Login(loc.T("error.login_form_invalid"), loc).Render(r.Context(), w)
 		return
 	}
 
@@ -50,13 +54,13 @@ func (h *Handler) LoginSubmit(w http.ResponseWriter, r *http.Request) {
 	password := r.FormValue("password")
 
 	if login == "" || password == "" {
-		pages.Login("Lütfen kullanıcı adı ve şifre girin").Render(r.Context(), w)
+		pages.Login(loc.T("error.login_prompt"), loc).Render(r.Context(), w)
 		return
 	}
 
 	token, err := auth.Authenticate(login, password)
 	if err != nil {
-		pages.Login("Geçersiz kimlik bilgileri").Render(r.Context(), w)
+		pages.Login(loc.T("error.login_invalid"), loc).Render(r.Context(), w)
 		return
 	}
 
@@ -86,11 +90,13 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
-	pages.Dashboard().Render(r.Context(), w)
+	loc := i18n.FromContext(r.Context())
+	pages.Dashboard(loc).Render(r.Context(), w)
 }
 
 func (h *Handler) Settings(w http.ResponseWriter, r *http.Request) {
-	pages.Settings(h.app.Config()).Render(r.Context(), w)
+	loc := i18n.FromContext(r.Context())
+	pages.Settings(h.app.Config(), loc).Render(r.Context(), w)
 }
 
 func (h *Handler) getInterfaces() []string {
@@ -142,12 +148,14 @@ func (h *Handler) findRuleIndex(groupIdx int, ruleID string) (int, error) {
 }
 
 func (h *Handler) HtmxGetGroups(w http.ResponseWriter, r *http.Request) {
+	loc := i18n.FromContext(r.Context())
 	groups := h.getGroupModels()
 	ifaces := h.getInterfaces()
-	pages.GroupsList(groups, ifaces).Render(r.Context(), w)
+	pages.GroupsList(groups, ifaces, loc).Render(r.Context(), w)
 }
 
 func (h *Handler) HtmxCreateGroup(w http.ResponseWriter, r *http.Request) {
+	loc := i18n.FromContext(r.Context())
 	group := &models.Group{
 		ID:        intID.RandomID(),
 		Name:      "New Group",
@@ -156,29 +164,30 @@ func (h *Handler) HtmxCreateGroup(w http.ResponseWriter, r *http.Request) {
 		Enable:    true,
 	}
 	if err := h.app.AddGroup(group); err != nil {
-		http.Error(w, "Sunucu hatası", http.StatusInternalServerError)
+		http.Error(w, loc.T("error.server_error"), http.StatusInternalServerError)
 		return
 	}
 	ifaces := h.getInterfaces()
-	components.GroupPanel(group, ifaces).Render(r.Context(), w)
+	components.GroupPanel(group, ifaces, loc).Render(r.Context(), w)
 }
 
 func (h *Handler) HtmxUpdateGroup(w http.ResponseWriter, r *http.Request) {
+	loc := i18n.FromContext(r.Context())
 	groupID := chi.URLParam(r, "groupID")
 	idx, err := h.findGroupIndex(groupID)
 	if err != nil {
-		http.Error(w, "Bulunamadı", http.StatusNotFound)
+		http.Error(w, loc.T("error.not_found"), http.StatusNotFound)
 		return
 	}
 
 	if err := r.ParseForm(); err != nil {
-		http.Error(w, "Geçersiz istek", http.StatusBadRequest)
+		http.Error(w, loc.T("error.bad_request"), http.StatusBadRequest)
 		return
 	}
 
 	ifaceValue := r.FormValue("interface")
 	if err := models.ValidateInterfaceName(ifaceValue); err != nil {
-		http.Error(w, "Geçersiz arayüz adı", http.StatusBadRequest)
+		http.Error(w, loc.T("error.interface_invalid"), http.StatusBadRequest)
 		return
 	}
 
@@ -196,14 +205,15 @@ func (h *Handler) HtmxUpdateGroup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ifaces := h.getInterfaces()
-	components.GroupPanel(group, ifaces).Render(r.Context(), w)
+	components.GroupPanel(group, ifaces, loc).Render(r.Context(), w)
 }
 
 func (h *Handler) HtmxDeleteGroup(w http.ResponseWriter, r *http.Request) {
+	loc := i18n.FromContext(r.Context())
 	groupID := chi.URLParam(r, "groupID")
 	idx, err := h.findGroupIndex(groupID)
 	if err != nil {
-		http.Error(w, "Bulunamadı", http.StatusNotFound)
+		http.Error(w, loc.T("error.not_found"), http.StatusNotFound)
 		return
 	}
 
@@ -216,20 +226,22 @@ func (h *Handler) HtmxDeleteGroup(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) HtmxAddRuleForm(w http.ResponseWriter, r *http.Request) {
+	loc := i18n.FromContext(r.Context())
 	groupID := chi.URLParam(r, "groupID")
-	components.NewRuleRow(groupID).Render(r.Context(), w)
+	components.NewRuleRow(groupID, loc).Render(r.Context(), w)
 }
 
 func (h *Handler) HtmxCreateRule(w http.ResponseWriter, r *http.Request) {
+	loc := i18n.FromContext(r.Context())
 	groupID := chi.URLParam(r, "groupID")
 	idx, err := h.findGroupIndex(groupID)
 	if err != nil {
-		http.Error(w, "Bulunamadı", http.StatusNotFound)
+		http.Error(w, loc.T("error.not_found"), http.StatusNotFound)
 		return
 	}
 
 	if err := r.ParseForm(); err != nil {
-		http.Error(w, "Geçersiz istek", http.StatusBadRequest)
+		http.Error(w, loc.T("error.bad_request"), http.StatusBadRequest)
 		return
 	}
 
@@ -249,27 +261,28 @@ func (h *Handler) HtmxCreateRule(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	components.RuleRow(groupID, rule).Render(r.Context(), w)
+	components.RuleRow(groupID, rule, loc).Render(r.Context(), w)
 }
 
 func (h *Handler) HtmxUpdateRule(w http.ResponseWriter, r *http.Request) {
+	loc := i18n.FromContext(r.Context())
 	groupID := chi.URLParam(r, "groupID")
 	ruleID := chi.URLParam(r, "ruleID")
 
 	groupIdx, err := h.findGroupIndex(groupID)
 	if err != nil {
-		http.Error(w, "Bulunamadı", http.StatusNotFound)
+		http.Error(w, loc.T("error.not_found"), http.StatusNotFound)
 		return
 	}
 
 	ruleIdx, err := h.findRuleIndex(groupIdx, ruleID)
 	if err != nil {
-		http.Error(w, "Bulunamadı", http.StatusNotFound)
+		http.Error(w, loc.T("error.not_found"), http.StatusNotFound)
 		return
 	}
 
 	if err := r.ParseForm(); err != nil {
-		http.Error(w, "Geçersiz istek", http.StatusBadRequest)
+		http.Error(w, loc.T("error.bad_request"), http.StatusBadRequest)
 		return
 	}
 
@@ -286,22 +299,23 @@ func (h *Handler) HtmxUpdateRule(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	components.RuleRow(groupID, rule).Render(r.Context(), w)
+	components.RuleRow(groupID, rule, loc).Render(r.Context(), w)
 }
 
 func (h *Handler) HtmxDeleteRule(w http.ResponseWriter, r *http.Request) {
+	loc := i18n.FromContext(r.Context())
 	groupID := chi.URLParam(r, "groupID")
 	ruleID := chi.URLParam(r, "ruleID")
 
 	groupIdx, err := h.findGroupIndex(groupID)
 	if err != nil {
-		http.Error(w, "Bulunamadı", http.StatusNotFound)
+		http.Error(w, loc.T("error.not_found"), http.StatusNotFound)
 		return
 	}
 
 	ruleIdx, err := h.findRuleIndex(groupIdx, ruleID)
 	if err != nil {
-		http.Error(w, "Bulunamadı", http.StatusNotFound)
+		http.Error(w, loc.T("error.not_found"), http.StatusNotFound)
 		return
 	}
 
@@ -321,22 +335,24 @@ func (h *Handler) HtmxDeleteRule(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) HtmxSaveConfig(w http.ResponseWriter, r *http.Request) {
+	loc := i18n.FromContext(r.Context())
 	if err := h.app.SaveConfig(); err != nil {
 		log.Error().Err(err).Msg("config save failed")
-		http.Error(w, "Kaydetme başarısız", http.StatusInternalServerError)
+		http.Error(w, loc.T("error.save_failed"), http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "text/html")
-	w.Write([]byte(`<span style="color:var(--green);font-size:0.875rem" hx-swap-oob="true" id="save-status">Kaydedildi</span>`))
+	w.Write([]byte(fmt.Sprintf(`<span style="color:var(--green);font-size:0.875rem" hx-swap-oob="true" id="save-status">%s</span>`, loc.T("ui.saved"))))
 }
 
 func (h *Handler) HtmxMoveGroup(w http.ResponseWriter, r *http.Request) {
+	loc := i18n.FromContext(r.Context())
 	groupID := chi.URLParam(r, "groupID")
 	direction := chi.URLParam(r, "direction")
 
 	idx, err := h.findGroupIndex(groupID)
 	if err != nil {
-		http.Error(w, "Bulunamadı", http.StatusNotFound)
+		http.Error(w, loc.T("error.not_found"), http.StatusNotFound)
 		return
 	}
 
@@ -354,23 +370,24 @@ func (h *Handler) HtmxMoveGroup(w http.ResponseWriter, r *http.Request) {
 
 	groups := h.getGroupModels()
 	ifaces := h.getInterfaces()
-	pages.GroupsList(groups, ifaces).Render(r.Context(), w)
+	pages.GroupsList(groups, ifaces, loc).Render(r.Context(), w)
 }
 
 func (h *Handler) HtmxMoveRule(w http.ResponseWriter, r *http.Request) {
+	loc := i18n.FromContext(r.Context())
 	groupID := chi.URLParam(r, "groupID")
 	ruleID := chi.URLParam(r, "ruleID")
 	direction := chi.URLParam(r, "direction")
 
 	groupIdx, err := h.findGroupIndex(groupID)
 	if err != nil {
-		http.Error(w, "Bulunamadı", http.StatusNotFound)
+		http.Error(w, loc.T("error.not_found"), http.StatusNotFound)
 		return
 	}
 
 	ruleIdx, err := h.findRuleIndex(groupIdx, ruleID)
 	if err != nil {
-		http.Error(w, "Bulunamadı", http.StatusNotFound)
+		http.Error(w, loc.T("error.not_found"), http.StatusNotFound)
 		return
 	}
 
@@ -388,16 +405,17 @@ func (h *Handler) HtmxMoveRule(w http.ResponseWriter, r *http.Request) {
 
 	ifaces := h.getInterfaces()
 	group := h.app.Groups()[groupIdx].Model()
-	components.GroupPanel(group, ifaces).Render(r.Context(), w)
+	components.GroupPanel(group, ifaces, loc).Render(r.Context(), w)
 }
 
 func (h *Handler) HtmxSearchGroups(w http.ResponseWriter, r *http.Request) {
+	loc := i18n.FromContext(r.Context())
 	query := strings.ToLower(strings.TrimSpace(r.URL.Query().Get("q")))
 	allGroups := h.getGroupModels()
 	ifaces := h.getInterfaces()
 
 	if query == "" {
-		pages.GroupsList(allGroups, ifaces).Render(r.Context(), w)
+		pages.GroupsList(allGroups, ifaces, loc).Render(r.Context(), w)
 		return
 	}
 
@@ -429,15 +447,16 @@ func (h *Handler) HtmxSearchGroups(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	pages.GroupsList(filtered, ifaces).Render(r.Context(), w)
+	pages.GroupsList(filtered, ifaces, loc).Render(r.Context(), w)
 }
 
 func (h *Handler) ExportConfig(w http.ResponseWriter, r *http.Request) {
+	loc := i18n.FromContext(r.Context())
 	cfg := h.app.ExportConfig()
 	data, err := yaml.Marshal(cfg)
 	if err != nil {
 		log.Error().Err(err).Msg("config export failed")
-		http.Error(w, "Dışa aktarma başarısız", http.StatusInternalServerError)
+		http.Error(w, loc.T("error.export_failed"), http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/x-yaml")
@@ -446,32 +465,34 @@ func (h *Handler) ExportConfig(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) HtmxImportForm(w http.ResponseWriter, r *http.Request) {
-	components.ImportConfigForm().Render(r.Context(), w)
+	loc := i18n.FromContext(r.Context())
+	components.ImportConfigForm(loc).Render(r.Context(), w)
 }
 
 func (h *Handler) HtmxImportConfig(w http.ResponseWriter, r *http.Request) {
+	loc := i18n.FromContext(r.Context())
 	if err := r.ParseMultipartForm(10 << 20); err != nil {
-		http.Error(w, "Dosya çok büyük veya geçersiz form", http.StatusBadRequest)
+		http.Error(w, loc.T("error.file_too_large"), http.StatusBadRequest)
 		return
 	}
 
 	file, _, err := r.FormFile("config")
 	if err != nil {
-		http.Error(w, "Dosya yüklenmedi", http.StatusBadRequest)
+		http.Error(w, loc.T("error.file_not_uploaded"), http.StatusBadRequest)
 		return
 	}
 	defer file.Close()
 
 	data, err := io.ReadAll(file)
 	if err != nil {
-		http.Error(w, "Dosya okunamadı", http.StatusInternalServerError)
+		http.Error(w, loc.T("error.file_read_failed"), http.StatusInternalServerError)
 		return
 	}
 
 	var cfg config.Config
 	if err := yaml.Unmarshal(data, &cfg); err != nil {
 		if err := json.Unmarshal(data, &cfg); err != nil {
-			http.Error(w, "Geçersiz yapılandırma dosya formatı (YAML veya JSON bekleniyor)", http.StatusBadRequest)
+			http.Error(w, loc.T("error.import_invalid_format"), http.StatusBadRequest)
 			return
 		}
 	}
@@ -482,13 +503,13 @@ func (h *Handler) HtmxImportConfig(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.app.ImportConfig(cfg); err != nil {
 		log.Error().Err(err).Msg("config import failed")
-		http.Error(w, "İçe aktarma başarısız", http.StatusInternalServerError)
+		http.Error(w, loc.T("error.import_failed"), http.StatusInternalServerError)
 		return
 	}
 
 	groups := h.getGroupModels()
 	ifaces := h.getInterfaces()
-	pages.GroupsList(groups, ifaces).Render(r.Context(), w)
+	pages.GroupsList(groups, ifaces, loc).Render(r.Context(), w)
 }
 
 func (h *Handler) SessionAuthMiddleware(next http.Handler) http.Handler {

@@ -1,17 +1,18 @@
 package pages
 
 import (
+	"routex/i18n"
 	"routex/models"
 	"routex/web/templates/components"
 )
 
-templ GroupsList(groups []*models.Group, interfaces []string) {
+templ GroupsList(groups []*models.Group, interfaces []string, loc *i18n.Localizer) {
 	for _, group := range groups {
-		@components.GroupPanel(group, interfaces)
+		@components.GroupPanel(group, interfaces, loc)
 	}
 	if len(groups) == 0 {
 		<div style="text-align:center;padding:3rem;color:var(--text-2)">
-			<p>Henüz grup yok. Başlamak için grup ekleyin.</p>
+			<p>{ loc.T("groups.empty") }</p>
 		</div>
 	}
 }

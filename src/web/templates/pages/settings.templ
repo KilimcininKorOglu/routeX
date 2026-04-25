@@ -2,46 +2,47 @@ package pages
 
 import (
 	"fmt"
+	"routex/i18n"
 	"routex/models"
 	"routex/web/templates"
 )
 
-templ Settings(cfg models.AppConfig) {
-	@templates.AppShell("settings") {
+templ Settings(cfg models.AppConfig, loc *i18n.Localizer) {
+	@templates.AppShell("settings", loc) {
 		<div style="max-width:640px">
-			@settingsSection("DNS Vekil Sunucu") {
-				@settingsRow("Dinleme Adresi", fmt.Sprintf("%s:%d", cfg.DNSProxy.Host.Address, cfg.DNSProxy.Host.Port))
-				@settingsRow("Üst DNS", fmt.Sprintf("%s:%d", cfg.DNSProxy.Upstream.Address, cfg.DNSProxy.Upstream.Port))
-				@settingsRow("Port 53 Yönlendirme", boolDisplay(!cfg.DNSProxy.DisableRemap53))
-				@settingsRow("Sahte PTR", boolDisplay(!cfg.DNSProxy.DisableFakePTR))
-				@settingsRow("AAAA Kayıtlarını Engelle", boolDisplay(!cfg.DNSProxy.DisableDropAAAA))
-				@settingsRow("Maks. Boşta Bağlantı", fmt.Sprintf("%d", cfg.DNSProxy.MaxIdleConns))
-				@settingsRow("Maks. Eşzamanlı", fmt.Sprintf("%d", cfg.DNSProxy.MaxConcurrent))
-				@settingsRow("Zaman Aşımı", cfg.DNSProxy.Timeout.String())
+			@settingsSection(loc.T("settings.section_dns_proxy"), loc) {
+				@settingsRow(loc.T("settings.row_listen_address"), fmt.Sprintf("%s:%d", cfg.DNSProxy.Host.Address, cfg.DNSProxy.Host.Port), loc)
+				@settingsRow(loc.T("settings.row_upstream_dns"), fmt.Sprintf("%s:%d", cfg.DNSProxy.Upstream.Address, cfg.DNSProxy.Upstream.Port), loc)
+				@settingsRow(loc.T("settings.row_port53_redirect"), boolDisplay(loc, !cfg.DNSProxy.DisableRemap53), loc)
+				@settingsRow(loc.T("settings.row_fake_ptr"), boolDisplay(loc, !cfg.DNSProxy.DisableFakePTR), loc)
+				@settingsRow(loc.T("settings.row_drop_aaaa"), boolDisplay(loc, !cfg.DNSProxy.DisableDropAAAA), loc)
+				@settingsRow(loc.T("settings.row_max_idle_conns"), fmt.Sprintf("%d", cfg.DNSProxy.MaxIdleConns), loc)
+				@settingsRow(loc.T("settings.row_max_concurrent"), fmt.Sprintf("%d", cfg.DNSProxy.MaxConcurrent), loc)
+				@settingsRow(loc.T("settings.row_timeout"), cfg.DNSProxy.Timeout.String(), loc)
 			}
-			@settingsSection("HTTP Web Arayüzü") {
-				@settingsRow("Etkin", boolDisplay(cfg.HTTPWeb.Enabled))
-				@settingsRow("Dinleme Adresi", fmt.Sprintf("%s:%d", cfg.HTTPWeb.Host.Address, cfg.HTTPWeb.Host.Port))
-				@settingsRow("Kimlik Doğrulama", boolDisplay(cfg.HTTPWeb.Auth.Enabled))
+			@settingsSection(loc.T("settings.section_http_web"), loc) {
+				@settingsRow(loc.T("settings.row_enabled"), boolDisplay(loc, cfg.HTTPWeb.Enabled), loc)
+				@settingsRow(loc.T("settings.row_listen_address"), fmt.Sprintf("%s:%d", cfg.HTTPWeb.Host.Address, cfg.HTTPWeb.Host.Port), loc)
+				@settingsRow(loc.T("settings.row_auth"), boolDisplay(loc, cfg.HTTPWeb.Auth.Enabled), loc)
 			}
-			@settingsSection("Netfilter") {
-				@settingsRow("IPTables Zincir Ön Eki", cfg.Netfilter.IPTables.ChainPrefix)
-				@settingsRow("IPSet Tablo Ön Eki", cfg.Netfilter.IPSet.TablePrefix)
-				@settingsRow("IPSet Ek TTL", fmt.Sprintf("%d s", cfg.Netfilter.IPSet.AdditionalTTL))
-				@settingsRow("IPv4", boolDisplay(!cfg.Netfilter.DisableIPv4))
-				@settingsRow("IPv6", boolDisplay(!cfg.Netfilter.DisableIPv6))
-				@settingsRow("Başlangıç İşaret İndeksi", fmt.Sprintf("0x%X", cfg.Netfilter.StartMarkTableIndex))
+			@settingsSection(loc.T("settings.section_netfilter"), loc) {
+				@settingsRow(loc.T("settings.row_chain_prefix"), cfg.Netfilter.IPTables.ChainPrefix, loc)
+				@settingsRow(loc.T("settings.row_ipset_prefix"), cfg.Netfilter.IPSet.TablePrefix, loc)
+				@settingsRow(loc.T("settings.row_ipset_additional_ttl"), fmt.Sprintf("%d s", cfg.Netfilter.IPSet.AdditionalTTL), loc)
+				@settingsRow(loc.T("settings.row_ipv4"), boolDisplay(loc, !cfg.Netfilter.DisableIPv4), loc)
+				@settingsRow(loc.T("settings.row_ipv6"), boolDisplay(loc, !cfg.Netfilter.DisableIPv6), loc)
+				@settingsRow(loc.T("settings.row_start_mark_index"), fmt.Sprintf("0x%X", cfg.Netfilter.StartMarkTableIndex), loc)
 			}
-			@settingsSection("Sistem") {
-				@settingsRow("Günlük Seviyesi", cfg.LogLevel)
-				@settingsRow("Tüm Arayüzleri Göster", boolDisplay(cfg.ShowAllInterfaces))
-				@settingsRow("Bağlantı Arayüzleri", fmt.Sprintf("%v", cfg.Link))
+			@settingsSection(loc.T("settings.section_system"), loc) {
+				@settingsRow(loc.T("settings.row_log_level"), cfg.LogLevel, loc)
+				@settingsRow(loc.T("settings.row_show_all_interfaces"), boolDisplay(loc, cfg.ShowAllInterfaces), loc)
+				@settingsRow(loc.T("settings.row_link_interfaces"), fmt.Sprintf("%v", cfg.Link), loc)
 			}
 		</div>
 	}
 }
 
-templ settingsSection(title string) {
+templ settingsSection(title string, loc *i18n.Localizer) {
 	<div style="margin-bottom:24px">
 		<h3 style="margin:0 0 12px;font-size:14px;font-weight:600;color:#ffffff;text-transform:uppercase;letter-spacing:0.03em">
 			{ title }
@@ -56,13 +57,13 @@ templ settingsSection(title string) {
 	</div>
 }
 
-templ settingsRow(label string, value string) {
+templ settingsRow(label string, value string, loc *i18n.Localizer) {
 	<tr>
 		<td style="padding:12px 16px;color:#8a8a8a;border-bottom:1px solid #2d2d2d;width:45%">{ label }</td>
 		<td style="padding:12px 16px;font-family:var(--font-mono);color:#ffffff;border-bottom:1px solid #2d2d2d">
-			if value == "Etkin" {
+			if value == loc.T("settings.bool_enabled") {
 				<span style="color:#107C10;font-weight:600">{ value }</span>
-			} else if value == "Devre Dışı" {
+			} else if value == loc.T("settings.bool_disabled") {
 				<span style="color:#8a8a8a">{ value }</span>
 			} else {
 				{ value }
@@ -71,9 +72,9 @@ templ settingsRow(label string, value string) {
 	</tr>
 }
 
-func boolDisplay(v bool) string {
+func boolDisplay(loc *i18n.Localizer, v bool) string {
 	if v {
-		return "Etkin"
+		return loc.T("settings.bool_enabled")
 	}
-	return "Devre Dışı"
+	return loc.T("settings.bool_disabled")
 }

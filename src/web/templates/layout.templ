@@ -1,10 +1,13 @@
 package templates
 
-import "routex/constant"
+import (
+	"routex/constant"
+	"routex/i18n"
+)
 
-templ Layout(title string) {
+templ Layout(title string, loc *i18n.Localizer) {
 	<!DOCTYPE html>
-	<html lang="en">
+	<html lang={ loc.Lang }>
 		<head>
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
@@ -24,8 +27,8 @@ templ Layout(title string) {
 	</html>
 }
 
-templ AppShell(activeTab string) {
-	@Layout("RouteX") {
+templ AppShell(activeTab string, loc *i18n.Localizer) {
+	@Layout("RouteX", loc) {
 		<header class="header">
 			<div class="container">
 				<div class="header-title">
@@ -42,7 +45,7 @@ templ AppShell(activeTab string) {
 				<div class="header-actions">
 					<span id="save-status"></span>
 					<a href="/config/export" class="btn btn-ghost" style="padding:8px 16px;min-height:36px;font-size:13px">
-						Dışa Aktar
+						{ loc.T("btn.export") }
 					</a>
 					<button
 						class="btn btn-ghost"
@@ -51,7 +54,7 @@ templ AppShell(activeTab string) {
 						hx-target="body"
 						hx-swap="beforeend"
 					>
-						İçe Aktar
+						{ loc.T("btn.import") }
 					</button>
 					<button
 						class="btn btn-ghost"
@@ -60,14 +63,14 @@ templ AppShell(activeTab string) {
 						hx-target="#groups-content"
 						hx-swap="beforeend"
 					>
-						+ Grup Ekle
+						{ loc.T("btn.add_group") }
 					</button>
 					<button
 						class="btn btn-primary"
 						hx-post="/htmx/config/save"
 						hx-swap="none"
 					>
-						Kaydet
+						{ loc.T("btn.save") }
 					</button>
 				</div>
 			</div>
@@ -78,13 +81,13 @@ templ AppShell(activeTab string) {
 					href="/"
 					class={ "tab", templ.KV("active", activeTab == "groups") }
 				>
-					Gruplar
+					{ loc.T("tab.groups") }
 				</a>
 				<a
 					href="/settings"
 					class={ "tab", templ.KV("active", activeTab == "settings") }
 				>
-					Ayarlar
+					{ loc.T("tab.settings") }
 				</a>
 			</div>
 			<div id="tab-content">

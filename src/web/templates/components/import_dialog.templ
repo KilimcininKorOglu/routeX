@@ -1,6 +1,8 @@
 package components
 
-templ ImportConfigForm() {
+import "routex/i18n"
+
+templ ImportConfigForm(loc *i18n.Localizer) {
 	<div
 		id="import-overlay"
 		style="position:fixed;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(4px);z-index:500;display:flex;align-items:center;justify-content:center"
@@ -9,7 +11,7 @@ templ ImportConfigForm() {
 	>
 		<div class="card" style="width:100%;max-width:420px;border:1px solid #404040;box-shadow:0 16px 48px rgba(0,0,0,0.5)">
 			<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #2d2d2d">
-				<h3 style="margin:0;font-size:18px;font-weight:600">Yapılandırmayı İçe Aktar</h3>
+				<h3 style="margin:0;font-size:18px;font-weight:600">{ loc.T("import.title") }</h3>
 				<button
 					style="width:36px;height:36px;border-radius:4px;background:transparent;border:none;color:#8a8a8a;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px"
 					@click="document.getElementById('import-overlay').remove()"
@@ -24,7 +26,7 @@ templ ImportConfigForm() {
 			>
 				<div style="margin-bottom:20px">
 					<label style="display:block;font-size:14px;font-weight:600;color:#ffffff;margin-bottom:8px">
-						Bir YAML yapılandırma dosyası seçin
+						{ loc.T("import.select_file") }
 					</label>
 					<input
 						type="file"
@@ -40,10 +42,10 @@ templ ImportConfigForm() {
 						class="btn btn-ghost"
 						@click="document.getElementById('import-overlay').remove()"
 					>
-						İptal
+						{ loc.T("btn.cancel") }
 					</button>
 					<button type="submit" class="btn btn-primary">
-						İçe Aktar
+						{ loc.T("btn.import") }
 					</button>
 				</div>
 			</form>
