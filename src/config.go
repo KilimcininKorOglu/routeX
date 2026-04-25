@@ -86,6 +86,9 @@ func (a *App) ImportConfig(cfg config.Config) error {
 			if cfg.App.HTTPWeb.Skin != nil {
 				a.config.HTTPWeb.Skin = *cfg.App.HTTPWeb.Skin
 			}
+			if cfg.App.HTTPWeb.Language != nil {
+				a.config.HTTPWeb.Language = *cfg.App.HTTPWeb.Language
+			}
 		}
 
 		// Auth settings are intentionally excluded from import to prevent
@@ -261,7 +264,8 @@ func (a *App) ExportConfig() config.Config {
 					Address: &a.config.HTTPWeb.Host.Address,
 					Port:    &a.config.HTTPWeb.Host.Port,
 				},
-				Skin: &a.config.HTTPWeb.Skin,
+				Skin:     &a.config.HTTPWeb.Skin,
+				Language: &a.config.HTTPWeb.Language,
 			},
 			DNSProxy: &config.DNSProxy{
 				Host: &config.DNSProxyServer{

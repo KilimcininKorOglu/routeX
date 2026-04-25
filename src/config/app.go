@@ -13,7 +13,8 @@ type HTTPWeb struct {
 	Enabled *bool          `yaml:"enabled"`
 	Auth    *Auth          `yaml:"auth"`
 	Host    *HTTPWebServer `yaml:"host"`
-	Skin    *string        `yaml:"skin"`
+	Skin     *string        `yaml:"skin"`
+	Language *string        `yaml:"language"`
 }
 
 type Auth struct {

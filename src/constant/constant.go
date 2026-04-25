@@ -26,7 +26,8 @@ var DefaultAppConfig = models.AppConfig{
 			Address: "[::]",
 			Port:    8080,
 		},
-		Skin: "default",
+		Skin:     "default",
+		Language: "en",
 	},
 	Netfilter: models.AppConfigNetfilter{
 		IPTables: models.AppConfigIPTables{

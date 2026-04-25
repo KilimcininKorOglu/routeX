@@ -9,6 +9,7 @@ import (
 	"routex/api/auth"
 	v1 "routex/api/v1"
 	"routex/app"
+	"routex/i18n"
 	"routex/web"
 
 	"github.com/go-chi/chi/v5"
@@ -22,10 +23,19 @@ func SetupHTTP(a app.Main, errChan chan error) (*http.Server, error) {
 		return nil, nil
 	}
 
+	if err := i18n.Load(web.LocalesFS()); err != nil {
+		return nil, fmt.Errorf("locale files load error: %v", err)
+	}
+
 	addr := fmt.Sprintf("%s:%d", a.Config().HTTPWeb.Host.Address, a.Config().HTTPWeb.Host.Port)
 	listener, err := net.Listen("tcp", addr)
 	if err != nil {
-		return nil, fmt.Errorf("HTTP dinleme hatası %s: %v", addr, err)
+		return nil, fmt.Errorf("HTTP listen error %s: %v", addr, err)
+	}
+
+	defaultLang := a.Config().HTTPWeb.Language
+	if defaultLang == "" {
+		defaultLang = "en"
 	}
 
 	r := chi.NewRouter()
@@ -36,6 +46,28 @@ func SetupHTTP(a app.Main, errChan chan error) (*http.Server, error) {
 			w.Header().Set("X-Frame-Options", "DENY")
 			w.Header().Set("X-Content-Type-Options", "nosniff")
 			next.ServeHTTP(w, r)
+		})
+	})
+
+	r.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			lang := defaultLang
+			if q := r.URL.Query().Get("lang"); q != "" {
+				lang = q
+			} else if c, err := r.Cookie("lang"); err == nil && c.Value != "" {
+				lang = c.Value
+			} else if accept := r.Header.Get("Accept-Language"); accept != "" {
+				if idx := strings.IndexByte(accept, ','); idx > 0 {
+					accept = accept[:idx]
+				}
+				if idx := strings.IndexByte(accept, ';'); idx > 0 {
+					accept = accept[:idx]
+				}
+				lang = strings.TrimSpace(accept)
+			}
+			loc := i18n.Get(lang)
+			ctx := i18n.NewContext(r.Context(), loc)
+			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	})
 
