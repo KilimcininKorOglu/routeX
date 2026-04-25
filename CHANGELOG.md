@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.5.0] - 2026-04-26
+
+### Added
+- Rule test tool for domain-to-rule matching debug on dashboard
+- Inline domain test input with debounced live results (500ms)
+- Displays matched groups, rules, cached IPs, and CNAME aliases
+- REST API endpoint GET /api/v1/test?domain=... for programmatic testing
+
 ## [1.4.0] - 2026-04-26
 
 ### Added
