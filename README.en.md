@@ -28,7 +28,7 @@ No DNS cache clearing is needed on the client side. A brief warm-up period occur
 The following command automatically detects your platform and architecture, then adds the package repository:
 
 ```shell
-wget -qO- https://raw.githubusercontent.com/KilimcininKorOglu/routex/develop/scripts/add_repo.sh | sh
+wget -qO- https://raw.githubusercontent.com/KilimcininKorOglu/routeX/main/scripts/add_repo.sh | sh
 ```
 
 Then install with your package manager:

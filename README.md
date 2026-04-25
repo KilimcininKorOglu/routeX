@@ -30,7 +30,7 @@ Nasıl çalışır:
 Aşağıdaki komut platformunuzu ve mimarinizi otomatik algılayıp paket deposunu ekler:
 
 ```shell
-wget -qO- https://raw.githubusercontent.com/KilimcininKorOglu/routex/develop/scripts/add_repo.sh | sh
+wget -qO- https://raw.githubusercontent.com/KilimcininKorOglu/routeX/main/scripts/add_repo.sh | sh
 ```
 
 Ardından paket yöneticinizle kurulumu tamamlayın:
