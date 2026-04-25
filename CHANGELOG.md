@@ -3,6 +3,19 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.4.0] - 2026-04-26
+
+### Added
+- Real-time statistics dashboard with 5-second auto-refresh
+- DNS query counters by type (A, AAAA, PTR, other)
+- Response, fake PTR, and dropped AAAA record counters
+- Per-group matched domains and ipset entry count tracking
+- DNS cache statistics (domain count, address count)
+- Uptime display with days/hours/minutes formatting
+- Stats tab in navigation bar (Groups | Settings | Stats)
+- REST API endpoint GET /api/v1/stats for JSON statistics
+- Responsive card grid layout for statistics display
+
 ## [1.3.0] - 2026-04-25
 
 ### Added
