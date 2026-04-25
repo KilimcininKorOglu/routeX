@@ -231,6 +231,7 @@
   "subscription.status_error": "Hata",
   "subscription.status_ok": "Tamam",
   "stats.cache_addresses": "Önbellekteki Adresler",
+  "stats.connecting": "Bağlanıyor...",
   "stats.cache_domains": "Önbellekteki Alanlar",
   "stats.dropped_aaaa": "Düşürülen AAAA",
   "stats.fake_ptr": "Sahte PTR",

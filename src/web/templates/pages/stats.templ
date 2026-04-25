@@ -9,12 +9,64 @@ import (
 
 templ StatsPage(snap stats.Snapshot, loc *i18n.Localizer) {
 	@templates.AppShell("stats", loc) {
+		<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+			<span id="ws-status" style="font-size:12px;padding:2px 8px;border-radius:4px;background:#1a3a1a;color:#4CAF50">
+				{ loc.T("stats.connecting") }
+			</span>
+		</div>
 		<div id="stats-content"
 			hx-get="/htmx/stats"
-			hx-trigger="every 5s"
 			hx-swap="innerHTML">
 			@StatsContent(snap, loc)
 		</div>
+		<script>
+			(function() {
+				var proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+				var ws = new WebSocket(proto + '//' + location.host + '/ws/stats');
+				var statusEl = document.getElementById('ws-status');
+				var contentEl = document.getElementById('stats-content');
+
+				ws.onopen = function() {
+					statusEl.textContent = 'Live';
+					statusEl.style.background = '#1a3a1a';
+					statusEl.style.color = '#4CAF50';
+					contentEl.removeAttribute('hx-trigger');
+				};
+
+				ws.onmessage = function(e) {
+					var s = JSON.parse(e.data);
+					document.querySelectorAll('[data-stat]').forEach(function(el) {
+						var key = el.dataset.stat;
+						if (s[key] !== undefined) el.textContent = String(s[key]);
+					});
+					var uptimeEl = document.getElementById('stat-uptime');
+					if (uptimeEl && s.uptime) uptimeEl.textContent = s.uptime;
+					if (s.groups) updateGroupCards(s.groups);
+				};
+
+				ws.onclose = function() {
+					statusEl.textContent = 'Offline';
+					statusEl.style.background = '#3a1a1a';
+					statusEl.style.color = '#e81123';
+					setTimeout(function() {
+						contentEl.setAttribute('hx-get', '/htmx/stats');
+						contentEl.setAttribute('hx-trigger', 'every 5s');
+						if (typeof htmx !== 'undefined') htmx.process(contentEl);
+					}, 3000);
+				};
+
+				window.updateGroupCards = function(groups) {
+					groups.forEach(function(g) {
+						var matchEl = document.querySelector('[data-group-match="' + g.id + '"]');
+						if (matchEl) matchEl.textContent = String(g.matchedDomains);
+						var v4El = document.querySelector('[data-group-v4="' + g.id + '"]');
+						if (v4El) v4El.textContent = String(g.ipv4Entries);
+						var v6El = document.querySelector('[data-group-v6="' + g.id + '"]');
+						if (v6El) v6El.textContent = String(g.ipv6Entries);
+					});
+				};
+			})();
+		</script>
 	}
 }
 
@@ -22,31 +74,31 @@ templ StatsContent(snap stats.Snapshot, loc *i18n.Localizer) {
 	<div class="card" style="display:flex;align-items:center;gap:12px;padding:12px 16px;margin-bottom:24px">
 		<div>
 			<div style="font-size:13px;color:#8a8a8a">{ loc.T("stats.uptime") }</div>
-			<div style="font-size:16px;font-weight:600">{ snap.Uptime }</div>
+			<div id="stat-uptime" style="font-size:16px;font-weight:600">{ snap.Uptime }</div>
 		</div>
 	</div>
 
 	<h3 class="section-title">{ loc.T("stats.section_dns") }</h3>
 	<div class="stats-grid">
-		@statCard(loc.T("stats.total_queries"), fmtU64(snap.TotalQueries), "#107C10")
-		@statCard(loc.T("stats.total_responses"), fmtU64(snap.TotalResponses), "#0078d4")
-		@statCard(loc.T("stats.fake_ptr"), fmtU64(snap.FakePTRResponses), "#f7630c")
-		@statCard(loc.T("stats.dropped_aaaa"), fmtU64(snap.DroppedAAAA), "#e81123")
+		@statCardWS(loc.T("stats.total_queries"), fmtU64(snap.TotalQueries), "#107C10", "totalQueries")
+		@statCardWS(loc.T("stats.total_responses"), fmtU64(snap.TotalResponses), "#0078d4", "totalResponses")
+		@statCardWS(loc.T("stats.fake_ptr"), fmtU64(snap.FakePTRResponses), "#f7630c", "fakePtrResponses")
+		@statCardWS(loc.T("stats.dropped_aaaa"), fmtU64(snap.DroppedAAAA), "#e81123", "droppedAAAA")
 	</div>
 
 	<h3 class="section-title">{ loc.T("stats.section_queries") }</h3>
 	<div class="stats-grid">
-		@statCard("A", fmtU64(snap.QueriesA), "#107C10")
-		@statCard("AAAA", fmtU64(snap.QueriesAAAA), "#0078d4")
-		@statCard("PTR", fmtU64(snap.QueriesPTR), "#f7630c")
-		@statCard(loc.T("stats.other"), fmtU64(snap.QueriesOther), "#8a8a8a")
+		@statCardWS("A", fmtU64(snap.QueriesA), "#107C10", "queriesA")
+		@statCardWS("AAAA", fmtU64(snap.QueriesAAAA), "#0078d4", "queriesAAAA")
+		@statCardWS("PTR", fmtU64(snap.QueriesPTR), "#f7630c", "queriesPTR")
+		@statCardWS(loc.T("stats.other"), fmtU64(snap.QueriesOther), "#8a8a8a", "queriesOther")
 	</div>
 
 	<h3 class="section-title">{ loc.T("stats.section_cache") }</h3>
 	<div class="stats-grid">
-		@statCard(loc.T("stats.cache_domains"), fmtInt(snap.CacheDomains), "#0078d4")
-		@statCard(loc.T("stats.cache_addresses"), fmtInt(snap.CacheAddresses), "#107C10")
-		@statCard(loc.T("stats.matched_routes"), fmtU64(snap.MatchedRoutes), "#10B910")
+		@statCardWS(loc.T("stats.cache_domains"), fmtInt(snap.CacheDomains), "#0078d4", "cacheDomains")
+		@statCardWS(loc.T("stats.cache_addresses"), fmtInt(snap.CacheAddresses), "#107C10", "cacheAddresses")
+		@statCardWS(loc.T("stats.matched_routes"), fmtU64(snap.MatchedRoutes), "#10B910", "matchedRoutes")
 	</div>
 
 	<h3 class="section-title">{ loc.T("stats.section_groups") }</h3>
@@ -58,6 +110,18 @@ templ StatsContent(snap stats.Snapshot, loc *i18n.Localizer) {
 templ statCard(label string, value string, accentColor string) {
 	<div class="card" style="text-align:center">
 		<div style={ fmt.Sprintf("font-size:24px;font-weight:700;color:%s;font-family:var(--font-mono)", accentColor) }>
+			{ value }
+		</div>
+		<div style="font-size:12px;color:#8a8a8a;margin-top:4px">{ label }</div>
+	</div>
+}
+
+templ statCardWS(label string, value string, accentColor string, dataKey string) {
+	<div class="card" style="text-align:center">
+		<div
+			data-stat={ dataKey }
+			style={ fmt.Sprintf("font-size:24px;font-weight:700;color:%s;font-family:var(--font-mono)", accentColor) }
+		>
 			{ value }
 		</div>
 		<div style="font-size:12px;color:#8a8a8a;margin-top:4px">{ label }</div>
@@ -78,15 +142,15 @@ templ groupStatCard(g stats.GroupSnapshot, loc *i18n.Localizer) {
 			</div>
 			<div>
 				<div style="color:#8a8a8a">{ loc.T("stats.group_matches") }</div>
-				<div style="font-family:var(--font-mono)">{ fmtU64(g.MatchedDomains) }</div>
+				<div data-group-match={ g.ID } style="font-family:var(--font-mono)">{ fmtU64(g.MatchedDomains) }</div>
 			</div>
 			<div>
 				<div style="color:#8a8a8a">IPv4</div>
-				<div style="font-family:var(--font-mono)">{ fmtInt(g.IPv4Entries) }</div>
+				<div data-group-v4={ g.ID } style="font-family:var(--font-mono)">{ fmtInt(g.IPv4Entries) }</div>
 			</div>
 			<div>
 				<div style="color:#8a8a8a">IPv6</div>
-				<div style="font-family:var(--font-mono)">{ fmtInt(g.IPv6Entries) }</div>
+				<div data-group-v6={ g.ID } style="font-family:var(--font-mono)">{ fmtInt(g.IPv6Entries) }</div>
 			</div>
 		</div>
 	</div>

@@ -11,6 +11,7 @@ import (
 	"routex/app"
 	"routex/i18n"
 	"routex/web"
+	"routex/ws"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -108,6 +109,9 @@ func SetupHTTP(a app.Main, errChan chan error) (*http.Server, error) {
 		r.Get("/stats", h.StatsPage)
 		r.Get("/htmx/stats", h.HtmxGetStats)
 		r.Get("/htmx/rule-test", h.HtmxTestDomain)
+
+		statsHub := ws.NewHub()
+		r.Get("/ws/stats", ws.StatsHandler(a, statsHub))
 
 		r.Get("/htmx/groups", h.HtmxGetGroups)
 		r.Post("/htmx/groups", h.HtmxCreateGroup)

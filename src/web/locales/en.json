@@ -231,6 +231,7 @@
   "subscription.status_error": "Error",
   "subscription.status_ok": "OK",
   "stats.cache_addresses": "Cached Addresses",
+  "stats.connecting": "Connecting...",
   "stats.cache_domains": "Cached Domains",
   "stats.dropped_aaaa": "Dropped AAAA",
   "stats.fake_ptr": "Fake PTR",
