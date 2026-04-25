@@ -10,6 +10,7 @@ import (
 	"routex/app"
 	"routex/i18n"
 	"routex/models"
+	"routex/subscription"
 	"routex/utils/intID"
 
 	"github.com/rs/zerolog/log"
@@ -297,6 +298,12 @@ func (h *Handler) PutGroup(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) DeleteGroup(w http.ResponseWriter, r *http.Request) {
 	groupIdx, _ := strconv.Atoi(r.Header.Get("groupIdx"))
 	groupWrapper := h.app.Groups()[groupIdx]
+	model := groupWrapper.Model()
+	if model.IsSubscription() {
+		if subMgr := h.app.SubscriptionManager(); subMgr != nil {
+			subMgr.RemoveCachedFiles(model.ID)
+		}
+	}
 	if groupWrapper.Enabled() {
 		if err := groupWrapper.Disable(); err != nil {
 			loc := i18n.FromContext(r.Context())
@@ -543,5 +550,72 @@ func (h *Handler) DeleteRule(w http.ResponseWriter, r *http.Request) {
 		if err := h.app.SaveConfig(); err != nil {
 			log.Error().Err(err).Msg("failed to save config file")
 		}
+	}
+}
+
+// RefreshSubscription triggers a manual refresh for a subscription group
+func (h *Handler) RefreshSubscription(w http.ResponseWriter, r *http.Request) {
+	loc := i18n.FromContext(r.Context())
+	groupIdx, _ := strconv.Atoi(r.Header.Get("groupIdx"))
+	groupWrapper := h.app.Groups()[groupIdx]
+	model := groupWrapper.Model()
+
+	if !model.IsSubscription() {
+		utils.WriteError(w, http.StatusBadRequest, loc.T("error.subscription_not_found"))
+		return
+	}
+
+	subMgr := h.app.SubscriptionManager()
+	if subMgr == nil {
+		utils.WriteError(w, http.StatusInternalServerError, loc.T("error.api_internal"))
+		return
+	}
+
+	if err := subMgr.RefreshGroup(groupWrapper); err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, fmt.Sprintf("%s: %v", loc.T("error.subscription_fetch_failed"), err))
+		return
+	}
+
+	meta, _ := subMgr.GetMetadata(model.ID)
+	status := subscriptionStatusFromMeta(meta)
+	utils.WriteJson(w, http.StatusOK, status)
+}
+
+// GetSubscriptionStatus returns subscription status for a group
+func (h *Handler) GetSubscriptionStatus(w http.ResponseWriter, r *http.Request) {
+	loc := i18n.FromContext(r.Context())
+	groupIdx, _ := strconv.Atoi(r.Header.Get("groupIdx"))
+	model := h.app.Groups()[groupIdx].Model()
+
+	if !model.IsSubscription() {
+		utils.WriteError(w, http.StatusBadRequest, loc.T("error.subscription_not_found"))
+		return
+	}
+
+	subMgr := h.app.SubscriptionManager()
+	if subMgr == nil {
+		utils.WriteError(w, http.StatusInternalServerError, loc.T("error.api_internal"))
+		return
+	}
+
+	meta, err := subMgr.GetMetadata(model.ID)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	status := subscriptionStatusFromMeta(meta)
+	utils.WriteJson(w, http.StatusOK, status)
+}
+
+func subscriptionStatusFromMeta(meta *subscription.Metadata) types.SubscriptionStatus {
+	var lastUpdated string
+	if !meta.LastUpdated.IsZero() {
+		lastUpdated = meta.LastUpdated.Format("2006-01-02T15:04:05Z")
+	}
+	return types.SubscriptionStatus{
+		LastUpdated: lastUpdated,
+		RuleCount:   meta.RuleCount,
+		LastError:   meta.LastError,
 	}
 }

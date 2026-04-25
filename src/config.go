@@ -184,22 +184,35 @@ func (a *App) ImportConfig(cfg config.Config) error {
 
 		// Import new groups
 		for _, group := range *cfg.Groups {
-			rules := make([]*models.Rule, len(group.Rules))
-			for idx, rule := range group.Rules {
-				switch rule.Type {
-				case models.RuleTypeDomain, models.RuleTypeNamespace, models.RuleTypeWildcard,
-					models.RuleTypeRegEx, models.RuleTypeSubnet, models.RuleTypeSubnet6:
-				default:
-					return fmt.Errorf("group %q rule %q: invalid type %q", group.Name, rule.Name, rule.Type)
-				}
-				rules[idx] = &models.Rule{
-					ID:     rule.ID,
-					Name:   rule.Name,
-					Type:   rule.Type,
-					Rule:   rule.Rule,
-					Enable: rule.Enable,
+			var subscriptionURL string
+			var subscriptionInterval uint
+			if group.SubscriptionURL != nil {
+				subscriptionURL = *group.SubscriptionURL
+			}
+			if group.SubscriptionInterval != nil {
+				subscriptionInterval = *group.SubscriptionInterval
+			}
+
+			var rules []*models.Rule
+			if subscriptionURL == "" {
+				rules = make([]*models.Rule, len(group.Rules))
+				for idx, rule := range group.Rules {
+					switch rule.Type {
+					case models.RuleTypeDomain, models.RuleTypeNamespace, models.RuleTypeWildcard,
+						models.RuleTypeRegEx, models.RuleTypeSubnet, models.RuleTypeSubnet6:
+					default:
+						return fmt.Errorf("group %q rule %q: invalid type %q", group.Name, rule.Name, rule.Type)
+					}
+					rules[idx] = &models.Rule{
+						ID:     rule.ID,
+						Name:   rule.Name,
+						Type:   rule.Type,
+						Rule:   rule.Rule,
+						Enable: rule.Enable,
+					}
 				}
 			}
+
 			if match, _ := colorRegExp.MatchString(group.Color); !match {
 				group.Color = "#ffffff"
 			} else {
@@ -213,12 +226,14 @@ func (a *App) ImportConfig(cfg config.Config) error {
 				return fmt.Errorf("grup %q: %w", group.Name, err)
 			}
 			err := a.AddGroup(&models.Group{
-				ID:        group.ID,
-				Name:      group.Name,
-				Color:     group.Color,
-				Interface: group.Interface,
-				Enable:    enable,
-				Rules:     rules,
+				ID:                   group.ID,
+				Name:                 group.Name,
+				Color:                group.Color,
+				Interface:            group.Interface,
+				Enable:               enable,
+				Rules:                rules,
+				SubscriptionURL:      subscriptionURL,
+				SubscriptionInterval: subscriptionInterval,
 			})
 			if err != nil {
 				return err
@@ -238,15 +253,24 @@ func (a *App) ExportConfig() config.Config {
 			Color:     group.Color,
 			Interface: group.Interface,
 			Enable:    &group.Group.Enable,
-			Rules:     make([]config.Rule, len(group.Rules)),
 		}
-		for idx, rule := range group.Rules {
-			groupCfg.Rules[idx] = config.Rule{
-				ID:     rule.ID,
-				Name:   rule.Name,
-				Type:   rule.Type,
-				Rule:   rule.Rule,
-				Enable: rule.Enable,
+		if group.IsSubscription() {
+			url := group.SubscriptionURL
+			groupCfg.SubscriptionURL = &url
+			if group.SubscriptionInterval > 0 {
+				interval := group.SubscriptionInterval
+				groupCfg.SubscriptionInterval = &interval
+			}
+		} else {
+			groupCfg.Rules = make([]config.Rule, len(group.Rules))
+			for idx, rule := range group.Rules {
+				groupCfg.Rules[idx] = config.Rule{
+					ID:     rule.ID,
+					Name:   rule.Name,
+					Type:   rule.Type,
+					Rule:   rule.Rule,
+					Enable: rule.Enable,
+				}
 			}
 		}
 		groups[idx] = groupCfg

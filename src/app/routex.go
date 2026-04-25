@@ -6,6 +6,7 @@ import (
 
 	"routex/config"
 	"routex/models"
+	"routex/subscription"
 	"routex/utils/netfilterTools"
 
 	"github.com/vishvananda/netlink"
@@ -20,6 +21,7 @@ type Main interface {
 	SwapGroups(i, j int)
 	ListInterfaces() ([]net.Interface, error)
 	DnsOverrider() *netfilterTools.PortRemap
+	SubscriptionManager() *subscription.Manager
 	LoadConfig() error
 	SaveConfig() error
 	BackupConfig() error

@@ -121,6 +121,8 @@ func SetupHTTP(a app.Main, errChan chan error) (*http.Server, error) {
 		r.Get("/config/export", h.ExportConfig)
 		r.Post("/htmx/groups/{groupID}/move/{direction}", h.HtmxMoveGroup)
 		r.Post("/htmx/groups/{groupID}/rules/{ruleID}/move/{direction}", h.HtmxMoveRule)
+		r.Post("/htmx/groups/{groupID}/subscription/refresh", h.HtmxRefreshSubscription)
+		r.Get("/htmx/groups/{groupID}/subscription/status", h.HtmxGetSubscriptionStatus)
 	})
 
 	srv := &http.Server{Handler: r}

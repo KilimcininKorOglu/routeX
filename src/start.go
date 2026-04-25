@@ -11,6 +11,8 @@ import (
 	"time"
 
 	"routex/api"
+	"routex/constant"
+	"routex/subscription"
 	"routex/utils/dnsMITMProxy"
 	"routex/utils/iptables"
 	"routex/utils/netfilterTools"
@@ -115,7 +117,14 @@ func (a *App) Start(ctx context.Context) (err error) {
 		}()
 	}
 
+	a.subManager = subscription.NewManager(&subscriptionGroupAccessor{app: a}, constant.AppStateDir)
 	for _, group := range a.groups {
+		if group.IsSubscription() {
+			rules, err := a.subManager.LoadCachedRules(group.ID)
+			if err == nil && rules != nil {
+				group.Rules = rules
+			}
+		}
 		if err := group.Enable(); err != nil {
 			return fmt.Errorf("failed to enable group: %w", err)
 		}
@@ -123,6 +132,7 @@ func (a *App) Start(ctx context.Context) (err error) {
 			return fmt.Errorf("failed to sync group: %w", err)
 		}
 	}
+	a.subManager.Start(newCtx)
 	defer func() {
 		for _, group := range a.groups {
 			_ = group.Disable()

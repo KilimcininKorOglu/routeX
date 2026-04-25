@@ -42,7 +42,14 @@ func GroupFromReq(req types.GroupReq, existing *models.Group) (*models.Group, er
 		group.Enable = *req.Enable
 	}
 
-	if req.Rules != nil {
+	if req.SubscriptionURL != nil {
+		group.SubscriptionURL = *req.SubscriptionURL
+	}
+	if req.SubscriptionInterval != nil {
+		group.SubscriptionInterval = *req.SubscriptionInterval
+	}
+
+	if !group.IsSubscription() && req.Rules != nil {
 		newRules := make([]*models.Rule, len(*req.Rules))
 		for i, ruleReq := range *req.Rules {
 			r, err := RuleFromReq(ruleReq, group.Rules)
@@ -94,11 +101,13 @@ func RespFromGroups(groups []*models.Group, withRules bool) types.GroupsRes {
 
 func RespFromGroup(group *models.Group, withRules bool) types.GroupRes {
 	groupRes := types.GroupRes{
-		ID:        group.ID,
-		Name:      group.Name,
-		Color:     group.Color,
-		Interface: group.Interface,
-		Enable:    group.Enable,
+		ID:                   group.ID,
+		Name:                 group.Name,
+		Color:                group.Color,
+		Interface:            group.Interface,
+		Enable:               group.Enable,
+		SubscriptionURL:      group.SubscriptionURL,
+		SubscriptionInterval: group.SubscriptionInterval,
 	}
 	if withRules {
 		groupRes.RulesRes = RespFromRules(group.Rules)

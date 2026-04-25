@@ -10,6 +10,7 @@ import (
 	"routex/app"
 	"routex/constant"
 	"routex/models"
+	"routex/subscription"
 	"routex/utils/dnsMITMProxy"
 	"routex/utils/netfilterTools"
 	"routex/utils/recordsCache"
@@ -35,6 +36,7 @@ type App struct {
 	recordsCache *recordsCache.Records
 	groups       []*Group
 	dnsOverrider *netfilterTools.PortRemap
+	subManager   *subscription.Manager
 }
 
 // New creates a new App instance
@@ -143,4 +145,22 @@ func (a *App) ListInterfaces() ([]net.Interface, error) {
 // DnsOverrider returns the dnsOverrider
 func (a *App) DnsOverrider() *netfilterTools.PortRemap {
 	return a.dnsOverrider
+}
+
+// SubscriptionManager returns the subscription manager
+func (a *App) SubscriptionManager() *subscription.Manager {
+	return a.subManager
+}
+
+// subscriptionGroupAccessor adapts App to subscription.GroupAccessor
+type subscriptionGroupAccessor struct {
+	app *App
+}
+
+func (s *subscriptionGroupAccessor) Groups() []subscription.SubscribableGroup {
+	groups := make([]subscription.SubscribableGroup, len(s.app.groups))
+	for i, g := range s.app.groups {
+		groups[i] = g
+	}
+	return groups
 }

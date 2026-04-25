@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 	"routex/config"
 	"routex/i18n"
 	"routex/models"
+	"routex/subscription"
 	"routex/utils/intID"
 	"routex/web/templates/components"
 	"routex/web/templates/pages"
@@ -121,6 +123,32 @@ func (h *Handler) getGroupModels() []*models.Group {
 	return result
 }
 
+func (h *Handler) getSubscriptionMetas(groups []*models.Group) map[string]*subscription.Metadata {
+	subMgr := h.app.SubscriptionManager()
+	if subMgr == nil {
+		return nil
+	}
+	metas := make(map[string]*subscription.Metadata)
+	for _, g := range groups {
+		if g.IsSubscription() {
+			meta, err := subMgr.GetMetadata(g.ID)
+			if err == nil {
+				metas[g.ID.String()] = meta
+			}
+		}
+	}
+	return metas
+}
+
+func (h *Handler) getSubscriptionMeta(groupID intID.ID) *subscription.Metadata {
+	subMgr := h.app.SubscriptionManager()
+	if subMgr == nil {
+		return nil
+	}
+	meta, _ := subMgr.GetMetadata(groupID)
+	return meta
+}
+
 func (h *Handler) findGroupIndex(groupID string) (int, error) {
 	id, err := intID.ParseID(groupID)
 	if err != nil {
@@ -151,7 +179,8 @@ func (h *Handler) HtmxGetGroups(w http.ResponseWriter, r *http.Request) {
 	loc := i18n.FromContext(r.Context())
 	groups := h.getGroupModels()
 	ifaces := h.getInterfaces()
-	pages.GroupsList(groups, ifaces, loc).Render(r.Context(), w)
+	subMetas := h.getSubscriptionMetas(groups)
+	pages.GroupsList(groups, ifaces, subMetas, loc).Render(r.Context(), w)
 }
 
 func (h *Handler) HtmxCreateGroup(w http.ResponseWriter, r *http.Request) {
@@ -168,7 +197,7 @@ func (h *Handler) HtmxCreateGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ifaces := h.getInterfaces()
-	components.GroupPanel(group, ifaces, loc).Render(r.Context(), w)
+	components.GroupPanel(group, ifaces, nil, loc).Render(r.Context(), w)
 }
 
 func (h *Handler) HtmxUpdateGroup(w http.ResponseWriter, r *http.Request) {
@@ -197,6 +226,12 @@ func (h *Handler) HtmxUpdateGroup(w http.ResponseWriter, r *http.Request) {
 	group.Interface = ifaceValue
 	group.Color = r.FormValue("color")
 	group.Enable = r.FormValue("enable") == "on"
+	group.SubscriptionURL = r.FormValue("subscriptionUrl")
+	if intervalStr := r.FormValue("subscriptionInterval"); intervalStr != "" {
+		if v, err := strconv.ParseUint(intervalStr, 10, 32); err == nil {
+			group.SubscriptionInterval = uint(v)
+		}
+	}
 
 	if groupWrapper.Enabled() {
 		if err := groupWrapper.Sync(); err != nil {
@@ -205,7 +240,8 @@ func (h *Handler) HtmxUpdateGroup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ifaces := h.getInterfaces()
-	components.GroupPanel(group, ifaces, loc).Render(r.Context(), w)
+	subMeta := h.getSubscriptionMeta(group.ID)
+	components.GroupPanel(group, ifaces, subMeta, loc).Render(r.Context(), w)
 }
 
 func (h *Handler) HtmxDeleteGroup(w http.ResponseWriter, r *http.Request) {
@@ -218,6 +254,12 @@ func (h *Handler) HtmxDeleteGroup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	groupWrapper := h.app.Groups()[idx]
+	model := groupWrapper.Model()
+	if model.IsSubscription() {
+		if subMgr := h.app.SubscriptionManager(); subMgr != nil {
+			subMgr.RemoveCachedFiles(model.ID)
+		}
+	}
 	if groupWrapper.Enabled() {
 		_ = groupWrapper.Disable()
 	}
@@ -370,7 +412,8 @@ func (h *Handler) HtmxMoveGroup(w http.ResponseWriter, r *http.Request) {
 
 	groups := h.getGroupModels()
 	ifaces := h.getInterfaces()
-	pages.GroupsList(groups, ifaces, loc).Render(r.Context(), w)
+	subMetas := h.getSubscriptionMetas(groups)
+	pages.GroupsList(groups, ifaces, subMetas, loc).Render(r.Context(), w)
 }
 
 func (h *Handler) HtmxMoveRule(w http.ResponseWriter, r *http.Request) {
@@ -405,7 +448,8 @@ func (h *Handler) HtmxMoveRule(w http.ResponseWriter, r *http.Request) {
 
 	ifaces := h.getInterfaces()
 	group := h.app.Groups()[groupIdx].Model()
-	components.GroupPanel(group, ifaces, loc).Render(r.Context(), w)
+	subMeta := h.getSubscriptionMeta(group.ID)
+	components.GroupPanel(group, ifaces, subMeta, loc).Render(r.Context(), w)
 }
 
 func (h *Handler) HtmxSearchGroups(w http.ResponseWriter, r *http.Request) {
@@ -415,7 +459,8 @@ func (h *Handler) HtmxSearchGroups(w http.ResponseWriter, r *http.Request) {
 	ifaces := h.getInterfaces()
 
 	if query == "" {
-		pages.GroupsList(allGroups, ifaces, loc).Render(r.Context(), w)
+		subMetas := h.getSubscriptionMetas(allGroups)
+		pages.GroupsList(allGroups, ifaces, subMetas, loc).Render(r.Context(), w)
 		return
 	}
 
@@ -447,7 +492,8 @@ func (h *Handler) HtmxSearchGroups(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	pages.GroupsList(filtered, ifaces, loc).Render(r.Context(), w)
+	subMetas := h.getSubscriptionMetas(filtered)
+	pages.GroupsList(filtered, ifaces, subMetas, loc).Render(r.Context(), w)
 }
 
 func (h *Handler) ExportConfig(w http.ResponseWriter, r *http.Request) {
@@ -509,7 +555,8 @@ func (h *Handler) HtmxImportConfig(w http.ResponseWriter, r *http.Request) {
 
 	groups := h.getGroupModels()
 	ifaces := h.getInterfaces()
-	pages.GroupsList(groups, ifaces, loc).Render(r.Context(), w)
+	subMetas := h.getSubscriptionMetas(groups)
+	pages.GroupsList(groups, ifaces, subMetas, loc).Render(r.Context(), w)
 }
 
 func (h *Handler) SessionAuthMiddleware(next http.Handler) http.Handler {
@@ -540,4 +587,83 @@ func (h *Handler) SessionAuthMiddleware(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 	})
+}
+
+func (h *Handler) HtmxRefreshSubscription(w http.ResponseWriter, r *http.Request) {
+	loc := i18n.FromContext(r.Context())
+	groupID := chi.URLParam(r, "groupID")
+	id, err := intID.ParseID(groupID)
+	if err != nil {
+		http.Error(w, loc.T("error.bad_request"), http.StatusBadRequest)
+		return
+	}
+
+	var groupIdx int = -1
+	for i, g := range h.app.Groups() {
+		if g.Model().ID == id {
+			groupIdx = i
+			break
+		}
+	}
+	if groupIdx == -1 {
+		http.Error(w, loc.T("error.not_found"), http.StatusNotFound)
+		return
+	}
+
+	group := h.app.Groups()[groupIdx]
+	model := group.Model()
+	if !model.IsSubscription() {
+		http.Error(w, loc.T("error.subscription_not_found"), http.StatusBadRequest)
+		return
+	}
+
+	subMgr := h.app.SubscriptionManager()
+	if subMgr == nil {
+		http.Error(w, loc.T("error.server"), http.StatusInternalServerError)
+		return
+	}
+
+	if err := subMgr.RefreshGroup(group); err != nil {
+		log.Warn().Err(err).Str("group", model.Name).Msg("manual subscription refresh failed")
+	}
+
+	meta, _ := subMgr.GetMetadata(model.ID)
+	components.SubscriptionStatus(model, meta, loc).Render(r.Context(), w)
+}
+
+func (h *Handler) HtmxGetSubscriptionStatus(w http.ResponseWriter, r *http.Request) {
+	loc := i18n.FromContext(r.Context())
+	groupID := chi.URLParam(r, "groupID")
+	id, err := intID.ParseID(groupID)
+	if err != nil {
+		http.Error(w, loc.T("error.bad_request"), http.StatusBadRequest)
+		return
+	}
+
+	var groupIdx int = -1
+	for i, g := range h.app.Groups() {
+		if g.Model().ID == id {
+			groupIdx = i
+			break
+		}
+	}
+	if groupIdx == -1 {
+		http.Error(w, loc.T("error.not_found"), http.StatusNotFound)
+		return
+	}
+
+	model := h.app.Groups()[groupIdx].Model()
+	if !model.IsSubscription() {
+		http.Error(w, loc.T("error.subscription_not_found"), http.StatusBadRequest)
+		return
+	}
+
+	subMgr := h.app.SubscriptionManager()
+	if subMgr == nil {
+		http.Error(w, loc.T("error.server"), http.StatusInternalServerError)
+		return
+	}
+
+	meta, _ := subMgr.GetMetadata(model.ID)
+	components.SubscriptionStatus(model, meta, loc).Render(r.Context(), w)
 }

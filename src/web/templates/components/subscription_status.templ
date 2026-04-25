@@ -1,0 +1,57 @@
+package components
+
+import (
+	"fmt"
+	"routex/i18n"
+	"routex/models"
+	"routex/subscription"
+)
+
+templ SubscriptionStatus(group *models.Group, meta *subscription.Metadata, loc *i18n.Localizer) {
+	<div
+		id={ fmt.Sprintf("subscription-status-%s", group.ID.String()) }
+		class="subscription-status"
+		hx-get={ fmt.Sprintf("/htmx/groups/%s/subscription/status", group.ID.String()) }
+		hx-trigger="every 60s"
+		hx-swap="outerHTML"
+	>
+		<div class="subscription-info">
+			<span class="subscription-label">{ loc.T("label.subscription_url") }:</span>
+			<span class="subscription-url" title={ group.SubscriptionURL }>{ truncateURL(group.SubscriptionURL, 50) }</span>
+		</div>
+		<div class="subscription-meta">
+			if meta != nil && !meta.LastUpdated.IsZero() {
+				<span class="subscription-updated">
+					{ loc.T("label.last_updated") }: { meta.LastUpdated.Format("2006-01-02 15:04") }
+				</span>
+				<span class="subscription-count">
+					{ loc.Tf("groups.rules_count", meta.RuleCount) }
+				</span>
+			} else {
+				<span class="subscription-never">{ loc.T("subscription.never_updated") }</span>
+			}
+			if meta != nil && meta.LastError != "" {
+				<span class="subscription-error" title={ meta.LastError }>
+					{ loc.T("subscription.status_error") }
+				</span>
+			}
+		</div>
+		<button
+			class="btn btn-sm"
+			hx-post={ fmt.Sprintf("/htmx/groups/%s/subscription/refresh", group.ID.String()) }
+			hx-target={ fmt.Sprintf("#subscription-status-%s", group.ID.String()) }
+			hx-swap="outerHTML"
+			hx-indicator={ fmt.Sprintf("#refresh-spinner-%s", group.ID.String()) }
+		>
+			{ loc.T("btn.refresh_subscription") }
+			<span id={ fmt.Sprintf("refresh-spinner-%s", group.ID.String()) } class="htmx-indicator">...</span>
+		</button>
+	</div>
+}
+
+func truncateURL(url string, maxLen int) string {
+	if len(url) <= maxLen {
+		return url
+	}
+	return url[:maxLen-3] + "..."
+}

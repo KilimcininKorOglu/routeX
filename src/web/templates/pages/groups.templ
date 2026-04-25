@@ -3,12 +3,13 @@ package pages
 import (
 	"routex/i18n"
 	"routex/models"
+	"routex/subscription"
 	"routex/web/templates/components"
 )
 
-templ GroupsList(groups []*models.Group, interfaces []string, loc *i18n.Localizer) {
+templ GroupsList(groups []*models.Group, interfaces []string, subMetas map[string]*subscription.Metadata, loc *i18n.Localizer) {
 	for _, group := range groups {
-		@components.GroupPanel(group, interfaces, loc)
+		@components.GroupPanel(group, interfaces, subMetas[group.ID.String()], loc)
 	}
 	if len(groups) == 0 {
 		<div style="text-align:center;padding:3rem;color:var(--text-2)">

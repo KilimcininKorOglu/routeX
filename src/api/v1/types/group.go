@@ -19,6 +19,9 @@ type GroupReq struct {
 	Interface string    `json:"interface" example:"nwg0"`
 	Enable    *bool     `json:"enable" example:"true" TODO:"Make required after 1.0.0"`
 	RulesReq
+
+	SubscriptionURL      *string `json:"subscriptionUrl,omitempty"`
+	SubscriptionInterval *uint   `json:"subscriptionInterval,omitempty"`
 }
 
 type GroupRes struct {
@@ -28,4 +31,14 @@ type GroupRes struct {
 	Interface string   `json:"interface" example:"nwg0"`
 	Enable    bool     `json:"enable" example:"true"`
 	RulesRes
+
+	SubscriptionURL      string              `json:"subscriptionUrl,omitempty"`
+	SubscriptionInterval uint                `json:"subscriptionInterval,omitempty"`
+	SubscriptionStatus   *SubscriptionStatus `json:"subscriptionStatus,omitempty"`
+}
+
+type SubscriptionStatus struct {
+	LastUpdated string `json:"lastUpdated,omitempty"`
+	RuleCount   int    `json:"ruleCount"`
+	LastError   string `json:"lastError,omitempty"`
 }

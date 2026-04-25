@@ -46,6 +46,10 @@ func NewRouter(a app.Main) chi.Router {
 			r.Get("/", h.GetGroup)
 			r.Put("/", h.PutGroup)
 			r.Delete("/", h.DeleteGroup)
+			r.Route("/subscription", func(r chi.Router) {
+				r.Post("/refresh", h.RefreshSubscription)
+				r.Get("/status", h.GetSubscriptionStatus)
+			})
 			r.Route("/rules", func(r chi.Router) {
 				r.Get("/", h.GetRules)
 				r.Put("/", h.PutRules)

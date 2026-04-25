@@ -11,4 +11,11 @@ type Group struct {
 	Interface string
 	Enable    bool
 	Rules     []*Rule
+
+	SubscriptionURL      string
+	SubscriptionInterval uint // minutes; 0 means default (1440 = 24h)
+}
+
+func (g *Group) IsSubscription() bool {
+	return g.SubscriptionURL != ""
 }
