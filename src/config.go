@@ -172,6 +172,12 @@ func (a *App) ImportConfig(cfg config.Config) error {
 		for _, group := range *cfg.Groups {
 			rules := make([]*models.Rule, len(group.Rules))
 			for idx, rule := range group.Rules {
+				switch rule.Type {
+				case models.RuleTypeDomain, models.RuleTypeNamespace, models.RuleTypeWildcard,
+					models.RuleTypeRegEx, models.RuleTypeSubnet, models.RuleTypeSubnet6:
+				default:
+					return fmt.Errorf("grup %q kural %q: geçersiz tür %q", group.Name, rule.Name, rule.Type)
+				}
 				rules[idx] = &models.Rule{
 					ID:     rule.ID,
 					Name:   rule.Name,

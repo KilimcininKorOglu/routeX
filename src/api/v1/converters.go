@@ -72,7 +72,13 @@ func RuleFromReq(ruleReq types.RuleReq, existingRules []*models.Rule) (*models.R
 		}
 	}
 	rule.Name = ruleReq.Name
-	rule.Type = ruleReq.Type
+	switch ruleReq.Type {
+	case models.RuleTypeDomain, models.RuleTypeNamespace, models.RuleTypeWildcard,
+		models.RuleTypeRegEx, models.RuleTypeSubnet, models.RuleTypeSubnet6:
+		rule.Type = ruleReq.Type
+	default:
+		return nil, fmt.Errorf("geçersiz kural türü: %q", ruleReq.Type)
+	}
 	rule.Rule = ruleReq.Rule
 	rule.Enable = ruleReq.Enable
 	return rule, nil
