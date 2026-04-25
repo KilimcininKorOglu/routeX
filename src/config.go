@@ -77,11 +77,8 @@ func (a *App) ImportConfig(cfg config.Config) error {
 			}
 		}
 
-		if cfg.App.HTTPWeb != nil && cfg.App.HTTPWeb.Auth != nil {
-			if cfg.App.HTTPWeb.Auth.Enabled != nil {
-				a.config.HTTPWeb.Auth.Enabled = *cfg.App.HTTPWeb.Auth.Enabled
-			}
-		}
+		// Auth settings are intentionally excluded from import to prevent
+		// authenticated users from disabling authentication via config upload.
 
 		if cfg.App.DNSProxy != nil {
 			if cfg.App.DNSProxy.Upstream != nil {
