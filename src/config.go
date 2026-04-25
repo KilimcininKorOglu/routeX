@@ -123,11 +123,17 @@ func (a *App) ImportConfig(cfg config.Config) error {
 		if cfg.App.Netfilter != nil {
 			if cfg.App.Netfilter.IPTables != nil {
 				if cfg.App.Netfilter.IPTables.ChainPrefix != nil {
+					if err := models.ValidateChainPrefix(*cfg.App.Netfilter.IPTables.ChainPrefix); err != nil {
+						return err
+					}
 					a.config.Netfilter.IPTables.ChainPrefix = *cfg.App.Netfilter.IPTables.ChainPrefix
 				}
 			}
 			if cfg.App.Netfilter.IPSet != nil {
 				if cfg.App.Netfilter.IPSet.TablePrefix != nil {
+					if err := models.ValidateIpsetPrefix(*cfg.App.Netfilter.IPSet.TablePrefix); err != nil {
+						return err
+					}
 					a.config.Netfilter.IPSet.TablePrefix = *cfg.App.Netfilter.IPSet.TablePrefix
 				}
 				if cfg.App.Netfilter.IPSet.AdditionalTTL != nil {
