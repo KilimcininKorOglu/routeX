@@ -207,6 +207,15 @@ jobs:
             bash scripts/generate-packages.sh "$dir"
           done
 
+      - name: Add public signing key to repository
+        env:
+          BUILD_KEY_APK_PUB_CONTENT: ${{ secrets.BUILD_KEY_APK_PUB }}
+        run: |
+          if [ -n "$BUILD_KEY_APK_PUB_CONTENT" ]; then
+            printf '%s' "$BUILD_KEY_APK_PUB_CONTENT" > repo/public-key.pem
+            echo "Public signing key added to repo"
+          fi
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@e9c66a37f080288a11235e32cbe2dc5fb3a679cc # v4
         with:

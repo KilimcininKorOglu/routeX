@@ -91,8 +91,12 @@ EOF
     mkdir -p /etc/apk/repositories.d
     echo "${REPO_BASE}/openwrt-apk/${ARCH}" > /etc/apk/repositories.d/${PKG_NAME}.list
 
+    mkdir -p /etc/apk/keys
+    wget -q -O /etc/apk/keys/${PKG_NAME}.pem "${REPO_BASE}/public-key.pem"
+    echo "Imza anahtari yuklendi: /etc/apk/keys/${PKG_NAME}.pem"
+
     echo "Depo eklendi: /etc/apk/repositories.d/${PKG_NAME}.list"
-    echo "Kurulum için: apk update && apk add --allow-untrusted ${PKG_NAME}"
+    echo "Kurulum için: apk update && apk add ${PKG_NAME}"
     exit 0
 
   else
