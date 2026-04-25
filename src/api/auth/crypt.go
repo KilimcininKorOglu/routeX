@@ -24,7 +24,7 @@ const (
 
 func cryptPassword(password, salt string) (string, error) {
 	if strings.HasPrefix(salt, md5Prefix) {
-		return md5Crypt(password, salt)
+		return "", errors.New("md5crypt desteklenmiyor, şifrenizi sha256crypt veya sha512crypt ile güncelleyin")
 	}
 	if strings.HasPrefix(salt, sha256Prefix) {
 		return sha256Crypt(password, salt)
