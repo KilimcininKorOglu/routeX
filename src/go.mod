@@ -1,6 +1,6 @@
 module routex
 
-go 1.23.12
+go 1.25.0
 
 require (
 	github.com/IGLOU-EU/go-wildcard/v2 v2.1.0
@@ -10,8 +10,8 @@ require (
 	github.com/miekg/dns v1.1.68
 	github.com/rs/zerolog v1.34.0
 	github.com/vishvananda/netlink v1.3.1
-	golang.org/x/net v0.42.0
-	golang.org/x/sys v0.34.0
+	golang.org/x/net v0.53.0
+	golang.org/x/sys v0.43.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 

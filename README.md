@@ -136,7 +136,7 @@ Web arayüzü üzerinden:
 
 | Özellik          | Değer                                              |
 | :--------------- | :------------------------------------------------- |
-| Dil              | Go 1.23                                            |
+| Dil              | Go 1.25                                            |
 | Web Arayüzü      | templ + htmx + Alpine.js                           |
 | DNS Motoru       | miekg/dns ile MITM proxy                           |
 | Ağ Yönetimi      | iptables, ipset, netlink                           |
@@ -154,7 +154,7 @@ cp config/openwrt/aarch64_generic.config .config
 make
 ```
 
-Çıktı `.build/` dizinine yazılır. Derleme için Go 1.23, templ, upx ve fakeroot gereklidir.
+Çıktı `.build/` dizinine yazılır. Derleme için Go 1.25, templ, upx ve fakeroot gereklidir.
 
 ## Lisans
 

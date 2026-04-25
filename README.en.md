@@ -134,7 +134,7 @@ Through the web interface you can:
 
 | Property         | Value                                              |
 | :--------------- | :------------------------------------------------- |
-| Language         | Go 1.23                                            |
+| Language         | Go 1.25                                            |
 | Web Interface    | templ + htmx + Alpine.js                           |
 | DNS Engine       | MITM proxy with miekg/dns                          |
 | Network Control  | iptables, ipset, netlink                           |
@@ -150,7 +150,7 @@ cp config/openwrt/aarch64_generic.config .config
 make
 ```
 
-Output is written to the `.build/` directory. Building requires Go 1.23, templ, upx, and fakeroot.
+Output is written to the `.build/` directory. Building requires Go 1.25, templ, upx, and fakeroot.
 
 ## License
 
