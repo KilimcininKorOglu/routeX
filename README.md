@@ -115,7 +115,16 @@ sub.example.com         eşleşmez
 
 ## Web Arayüzü
 
-Kurulumdan sonra varsayılan olarak `http://<yönlendirici-ip>:8080` adresinden erişebilirsiniz. Web arayüzü üzerinden:
+Kurulumdan sonra varsayılan olarak `http://<yönlendirici-ip>:8080` adresinden erişebilirsiniz. Kimlik doğrulama varsayılan olarak açıktır; giriş için yönlendiricinin sistem kullanıcı bilgileri kullanılır:
+
+| Platform           | Kullanıcı Adı | Şifre Kaynağı     |
+| :----------------- | :------------- | :----------------- |
+| OpenWrt            | `root`         | `/etc/shadow`      |
+| Entware (Keenetic) | `root`         | `/opt/etc/shadow`  |
+
+Entware kullanıcıları root şifresi belirlenmemişse `passwd` komutuyla şifre oluşturmalıdır.
+
+Web arayüzü üzerinden:
 
 - Grup oluşturma, düzenleme ve silme
 - Kural ekleme, düzenleme ve sıralama
@@ -132,7 +141,7 @@ Kurulumdan sonra varsayılan olarak `http://<yönlendirici-ip>:8080` adresinden 
 | DNS Motoru       | miekg/dns ile MITM proxy                           |
 | Ağ Yönetimi      | iptables, ipset, netlink                           |
 | Yapılandırma     | YAML                                               |
-| Kimlik Doğrulama | JWT (isteğe bağlı)                                |
+| Kimlik Doğrulama | JWT (varsayılan olarak açık)                      |
 | Paket Formatı    | .ipk (opkg) ve .apk (Alpine)                      |
 | Lisans           | GPL-3.0-or-later                                   |
 

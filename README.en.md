@@ -113,7 +113,16 @@ sub.example.com         not matched
 
 ## Web Interface
 
-After installation, the web interface is available at `http://<router-ip>:8080` by default. Through the web interface you can:
+After installation, the web interface is available at `http://<router-ip>:8080` by default. Authentication is enabled by default; log in using your router's system credentials:
+
+| Platform           | Username | Password Source    |
+| :----------------- | :------- | :----------------- |
+| OpenWrt            | `root`   | `/etc/shadow`      |
+| Entware (Keenetic) | `root`   | `/opt/etc/shadow`  |
+
+Entware users must set a root password with the `passwd` command if one is not already configured.
+
+Through the web interface you can:
 
 - Create, edit, and delete groups
 - Add, edit, and reorder rules
@@ -130,7 +139,7 @@ After installation, the web interface is available at `http://<router-ip>:8080` 
 | DNS Engine       | MITM proxy with miekg/dns                          |
 | Network Control  | iptables, ipset, netlink                           |
 | Configuration    | YAML                                               |
-| Authentication   | JWT (optional)                                     |
+| Authentication   | JWT (enabled by default)                           |
 | Package Format   | .ipk (opkg) and .apk (Alpine)                     |
 | License          | GPL-3.0-or-later                                   |
 
