@@ -2,6 +2,7 @@ package dnsMITMProxy
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"net"
 	"sync"
@@ -9,12 +10,13 @@ import (
 
 // connPool is a simple connection pool based on a channel
 type connPool struct {
-	network string
-	addr    string
-	pool    chan net.Conn
-	maxIdle uint
-	mu      sync.Mutex
-	closed  bool
+	network   string
+	addr      string
+	pool      chan net.Conn
+	maxIdle   uint
+	mu        sync.Mutex
+	closed    bool
+	tlsConfig *tls.Config
 }
 
 func newConnPool(network, addr string, maxIdle uint) *connPool {
@@ -26,6 +28,16 @@ func newConnPool(network, addr string, maxIdle uint) *connPool {
 	}
 }
 
+func newTLSConnPool(addr string, maxIdle uint, cfg *tls.Config) *connPool {
+	return &connPool{
+		network:   "tcp",
+		addr:      addr,
+		pool:      make(chan net.Conn, maxIdle),
+		maxIdle:   maxIdle,
+		tlsConfig: cfg,
+	}
+}
+
 func (p *connPool) Get(ctx context.Context) (net.Conn, error) {
 	p.mu.Lock()
 	if p.closed {
@@ -34,7 +46,6 @@ func (p *connPool) Get(ctx context.Context) (net.Conn, error) {
 	}
 	p.mu.Unlock()
 
-	// Check context before trying to get/create connection
 	if ctx.Err() != nil {
 		return nil, ctx.Err()
 	}
@@ -43,6 +54,10 @@ func (p *connPool) Get(ctx context.Context) (net.Conn, error) {
 	case conn := <-p.pool:
 		return conn, nil
 	default:
+		if p.tlsConfig != nil {
+			d := tls.Dialer{Config: p.tlsConfig}
+			return d.DialContext(ctx, p.network, p.addr)
+		}
 		var d net.Dialer
 		return d.DialContext(ctx, p.network, p.addr)
 	}

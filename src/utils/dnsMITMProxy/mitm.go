@@ -24,15 +24,23 @@ type DNSMITMProxy struct {
 	RequestHook  func(net.Addr, dns.Msg, string) (*dns.Msg, *dns.Msg, error)
 	ResponseHook func(net.Addr, dns.Msg, dns.Msg, string) (*dns.Msg, error)
 
-	// Private fields
-	bufferPool  *sync.Pool
-	tcpConnPool *connPool
-	udpConnPool *connPool
-	semaphore   chan struct{}
-	timeout     time.Duration
+	bufferPool *sync.Pool
+	upstream   Upstream
+	semaphore  chan struct{}
+	timeout    time.Duration
 }
 
-func NewDNSMITMProxy(addr string, maxIdleConns, maxConcurrent uint, timeout time.Duration) *DNSMITMProxy {
+func NewDNSMITMProxy(cfg UpstreamConfig, maxConcurrent uint, timeout time.Duration) *DNSMITMProxy {
+	var upstream Upstream
+	switch cfg.Protocol {
+	case "dot":
+		upstream = newDoTUpstream(cfg.Address, cfg.MaxIdleConns, timeout, cfg.TLSSkipVerify, cfg.TLSServerName)
+	case "doh":
+		upstream = newDoHUpstream(cfg.URL, cfg.MaxIdleConns, timeout, cfg.TLSSkipVerify, cfg.TLSServerName)
+	default:
+		upstream = newPlainUpstream(cfg.Address, cfg.MaxIdleConns, timeout)
+	}
+
 	return &DNSMITMProxy{
 		bufferPool: &sync.Pool{
 			New: func() interface{} {
@@ -40,102 +48,22 @@ func NewDNSMITMProxy(addr string, maxIdleConns, maxConcurrent uint, timeout time
 				return &buf
 			},
 		},
-		timeout:     timeout,
-		tcpConnPool: newConnPool("tcp", addr, maxIdleConns),
-		udpConnPool: newConnPool("udp", addr, maxIdleConns),
-		semaphore:   make(chan struct{}, maxConcurrent),
+		timeout:   timeout,
+		upstream:  upstream,
+		semaphore: make(chan struct{}, maxConcurrent),
 	}
 }
 
-// Close closes all connection pools and releases resources
+// Close closes the upstream and releases resources
 func (p *DNSMITMProxy) Close() error {
-	if p.tcpConnPool != nil {
-		p.tcpConnPool.Close()
-	}
-	if p.udpConnPool != nil {
-		p.udpConnPool.Close()
+	if p.upstream != nil {
+		return p.upstream.Close()
 	}
 	return nil
 }
 
 func (p *DNSMITMProxy) requestUpstreamDNS(ctx context.Context, req []byte, network string) ([]byte, error) {
-	var pool *connPool
-	if network == "tcp" {
-		pool = p.tcpConnPool
-	} else {
-		pool = p.udpConnPool
-	}
-
-	upstreamConn, err := pool.Get(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to DNS upstream server: %w", err)
-	}
-
-	// Set deadline based on context or default timeout
-	deadline, ok := ctx.Deadline()
-	if !ok {
-		deadline = time.Now().Add(p.timeout)
-	}
-	err = upstreamConn.SetDeadline(deadline)
-	if err != nil {
-		_ = upstreamConn.Close()
-		return nil, fmt.Errorf("failed to set deadline: %w", err)
-	}
-
-	if network == "tcp" {
-		lenBuf := []byte{byte(len(req) >> 8), byte(len(req))}
-		_, err = upstreamConn.Write(lenBuf)
-		if err != nil {
-			_ = upstreamConn.Close()
-			return nil, fmt.Errorf("failed to write length: %w", err)
-		}
-	}
-
-	_, err = upstreamConn.Write(req)
-	if err != nil {
-		_ = upstreamConn.Close()
-		return nil, fmt.Errorf("failed to write request: %w", err)
-	}
-
-	var resp []byte
-	if network == "tcp" {
-		// Read length prefix directly with bytes
-		lenBuf := make([]byte, 2)
-		_, err = io.ReadFull(upstreamConn, lenBuf)
-		if err != nil {
-			_ = upstreamConn.Close()
-			return nil, fmt.Errorf("failed to read length: %w", err)
-		}
-		respLen := int(lenBuf[0])<<8 | int(lenBuf[1])
-		if respLen > maxTCPMsgSize {
-			_ = upstreamConn.Close()
-			return nil, fmt.Errorf("response too large: %d", respLen)
-		}
-
-		resp = make([]byte, respLen)
-		_, err = io.ReadFull(upstreamConn, resp)
-		if err != nil {
-			_ = upstreamConn.Close()
-			return nil, fmt.Errorf("failed to read response: %w", err)
-		}
-	} else {
-		bufPtr := p.bufferPool.Get().(*[]byte)
-		defer p.bufferPool.Put(bufPtr)
-		buf := *bufPtr
-
-		n, err := upstreamConn.Read(buf)
-		if err != nil {
-			_ = upstreamConn.Close()
-			return nil, fmt.Errorf("failed to read response: %w", err)
-		}
-		resp = make([]byte, n)
-		copy(resp, buf[:n])
-	}
-
-	// Return connection to pool
-	pool.Put(upstreamConn)
-
-	return resp, nil
+	return p.upstream.Query(ctx, req, network)
 }
 
 func (p *DNSMITMProxy) processReq(ctx context.Context, clientAddr net.Addr, req []byte, network string) ([]byte, error) {

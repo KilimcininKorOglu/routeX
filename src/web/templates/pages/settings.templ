@@ -13,6 +13,13 @@ templ Settings(cfg models.AppConfig, loc *i18n.Localizer) {
 			@settingsSection(loc.T("settings.section_dns_proxy"), loc) {
 				@settingsRow(loc.T("settings.row_listen_address"), fmt.Sprintf("%s:%d", cfg.DNSProxy.Host.Address, cfg.DNSProxy.Host.Port), loc)
 				@settingsRow(loc.T("settings.row_upstream_dns"), fmt.Sprintf("%s:%d", cfg.DNSProxy.Upstream.Address, cfg.DNSProxy.Upstream.Port), loc)
+				@settingsRow(loc.T("settings.row_upstream_protocol"), cfg.DNSProxy.Protocol, loc)
+				if cfg.DNSProxy.Protocol == "doh" {
+					@settingsRow(loc.T("settings.row_doh_url"), cfg.DNSProxy.URL, loc)
+				}
+				if cfg.DNSProxy.Protocol == "dot" || cfg.DNSProxy.Protocol == "doh" {
+					@settingsRow(loc.T("settings.row_tls_verify"), boolDisplay(loc, !cfg.DNSProxy.TLSSkipVerify), loc)
+				}
 				@settingsRow(loc.T("settings.row_port53_redirect"), boolDisplay(loc, !cfg.DNSProxy.DisableRemap53), loc)
 				@settingsRow(loc.T("settings.row_fake_ptr"), boolDisplay(loc, !cfg.DNSProxy.DisableFakePTR), loc)
 				@settingsRow(loc.T("settings.row_drop_aaaa"), boolDisplay(loc, !cfg.DNSProxy.DisableDropAAAA), loc)

@@ -15,6 +15,13 @@ app:
     upstream:
       address: 127.0.0.1
       port: 53
+    # protocol: plain | dot | doh
+    # Examples:
+    #   DoT (Cloudflare): protocol: dot, address: 1.1.1.1, port: 853, tlsServerName: cloudflare-dns.com
+    #   DoH (Google):     protocol: doh, url: https://dns.google/dns-query
+    #   DoH (Cloudflare): protocol: doh, url: https://cloudflare-dns.com/dns-query
+    # tlsSkipVerify: false
+    # tlsServerName: ""
     disableRemap53: false
     disableFakePTR: false
     disableDropAAAA: false

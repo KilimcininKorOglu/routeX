@@ -41,8 +41,14 @@ func (a *App) Start(ctx context.Context) (err error) {
 	a.stats.StartedAt = time.Now()
 
 	a.dnsMITM = dnsMITMProxy.NewDNSMITMProxy(
-		net.JoinHostPort(a.config.DNSProxy.Upstream.Address, strconv.Itoa(int(a.config.DNSProxy.Upstream.Port))),
-		a.config.DNSProxy.MaxIdleConns,
+		dnsMITMProxy.UpstreamConfig{
+			Protocol:      a.config.DNSProxy.Protocol,
+			Address:       net.JoinHostPort(a.config.DNSProxy.Upstream.Address, strconv.Itoa(int(a.config.DNSProxy.Upstream.Port))),
+			URL:           a.config.DNSProxy.URL,
+			MaxIdleConns:  a.config.DNSProxy.MaxIdleConns,
+			TLSSkipVerify: a.config.DNSProxy.TLSSkipVerify,
+			TLSServerName: a.config.DNSProxy.TLSServerName,
+		},
 		a.config.DNSProxy.MaxConcurrent,
 		a.config.DNSProxy.Timeout,
 	)

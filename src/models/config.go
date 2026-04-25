@@ -37,6 +37,10 @@ type AppConfigDNSProxy struct {
 	MaxIdleConns    uint
 	MaxConcurrent   uint
 	Timeout         time.Duration
+	Protocol        string // "plain", "dot", "doh"
+	URL             string // DoH endpoint URL
+	TLSSkipVerify   bool
+	TLSServerName   string
 }
 
 type AppConfigDNSProxyServer struct {

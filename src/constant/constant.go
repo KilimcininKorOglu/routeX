@@ -16,6 +16,7 @@ var DefaultAppConfig = models.AppConfig{
 		MaxIdleConns:    10,
 		MaxConcurrent:   100,
 		Timeout:         5000 * time.Millisecond,
+		Protocol:        "plain",
 	},
 	HTTPWeb: models.AppConfigHTTPWeb{
 		Enabled: true,

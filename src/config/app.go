@@ -35,6 +35,10 @@ type DNSProxy struct {
 	MaxIdleConns    *uint           `yaml:"maxIdleConns"`
 	MaxConcurrent   *uint           `yaml:"maxConcurrent"`
 	Timeout         *uint           `yaml:"timeout"`
+	Protocol        *string         `yaml:"protocol,omitempty"`
+	URL             *string         `yaml:"url,omitempty"`
+	TLSSkipVerify   *bool           `yaml:"tlsSkipVerify,omitempty"`
+	TLSServerName   *string         `yaml:"tlsServerName,omitempty"`
 }
 
 type DNSProxyServer struct {

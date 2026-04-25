@@ -129,6 +129,26 @@ func (a *App) ImportConfig(cfg config.Config) error {
 			if cfg.App.DNSProxy.Timeout != nil {
 				a.config.DNSProxy.Timeout = time.Duration(*cfg.App.DNSProxy.Timeout) * time.Millisecond
 			}
+			if cfg.App.DNSProxy.Protocol != nil {
+				switch *cfg.App.DNSProxy.Protocol {
+				case "plain", "dot", "doh":
+					a.config.DNSProxy.Protocol = *cfg.App.DNSProxy.Protocol
+				default:
+					return fmt.Errorf("invalid upstream DNS protocol: %q (must be plain, dot, or doh)", *cfg.App.DNSProxy.Protocol)
+				}
+			}
+			if cfg.App.DNSProxy.URL != nil {
+				if a.config.DNSProxy.Protocol == "doh" && !strings.HasPrefix(*cfg.App.DNSProxy.URL, "https://") {
+					return fmt.Errorf("DoH URL must start with https://")
+				}
+				a.config.DNSProxy.URL = *cfg.App.DNSProxy.URL
+			}
+			if cfg.App.DNSProxy.TLSSkipVerify != nil {
+				a.config.DNSProxy.TLSSkipVerify = *cfg.App.DNSProxy.TLSSkipVerify
+			}
+			if cfg.App.DNSProxy.TLSServerName != nil {
+				a.config.DNSProxy.TLSServerName = *cfg.App.DNSProxy.TLSServerName
+			}
 		}
 
 		if cfg.App.Netfilter != nil {
@@ -306,6 +326,10 @@ func (a *App) ExportConfig() config.Config {
 				MaxIdleConns:    &a.config.DNSProxy.MaxIdleConns,
 				MaxConcurrent:   &a.config.DNSProxy.MaxConcurrent,
 				Timeout:         func(u uint) *uint { return &u }(uint(a.config.DNSProxy.Timeout.Milliseconds())),
+				Protocol:        &a.config.DNSProxy.Protocol,
+				URL:             &a.config.DNSProxy.URL,
+				TLSSkipVerify:   &a.config.DNSProxy.TLSSkipVerify,
+				TLSServerName:   &a.config.DNSProxy.TLSServerName,
 			},
 			Netfilter: &config.Netfilter{
 				IPTables: &config.IPTables{
