@@ -124,6 +124,8 @@ Kurulumdan sonra varsayılan olarak `http://<yönlendirici-ip>:8080` adresinden 
 
 Entware kullanıcıları root şifresi belirlenmemişse `passwd` komutuyla şifre oluşturmalıdır.
 
+Web arayüzü Türkçe ve İngilizce dillerini destekler. Dil değiştirmek için sağ üst köşedeki TR/EN düğmesini kullanın. Dil tercihi tarayıcı çerezinde saklanır.
+
 Web arayüzü üzerinden:
 
 - Grup oluşturma, düzenleme ve silme
@@ -131,6 +133,7 @@ Web arayüzü üzerinden:
 - Yapılandırma içeri/dışa aktarma
 - Arama ve filtreleme
 - Sistem ayarlarını görüntüleme
+- Türkçe/İngilizce dil değiştirme
 
 ## Teknik Detaylar
 
@@ -141,7 +144,8 @@ Web arayüzü üzerinden:
 | DNS Motoru       | miekg/dns ile MITM proxy                           |
 | Ağ Yönetimi      | iptables, ipset, netlink                           |
 | Yapılandırma     | YAML                                               |
-| Kimlik Doğrulama | JWT (varsayılan olarak açık)                      |
+| Kimlik Doğrulama | JWT (varsayılan olarak açık)                       |
+| Çoklu Dil        | Türkçe, İngilizce (JSON dil dosyaları)             |
 | Paket Formatı    | .ipk (opkg) ve .apk (Alpine)                      |
 | Lisans           | GPL-3.0-or-later                                   |
 

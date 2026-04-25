@@ -122,6 +122,8 @@ After installation, the web interface is available at `http://<router-ip>:8080` 
 
 Entware users must set a root password with the `passwd` command if one is not already configured.
 
+The web interface supports Turkish and English. Use the TR/EN toggle in the top-right corner to switch languages. The preference is saved in a browser cookie.
+
 Through the web interface you can:
 
 - Create, edit, and delete groups
@@ -129,6 +131,7 @@ Through the web interface you can:
 - Import and export configuration
 - Search and filter
 - View system settings
+- Switch between Turkish and English
 
 ## Technical Details
 
@@ -140,6 +143,7 @@ Through the web interface you can:
 | Network Control  | iptables, ipset, netlink                           |
 | Configuration    | YAML                                               |
 | Authentication   | JWT (enabled by default)                           |
+| Localization     | Turkish, English (JSON locale files)               |
 | Package Format   | .ipk (opkg) and .apk (Alpine)                     |
 | License          | GPL-3.0-or-later                                   |
 
