@@ -186,6 +186,9 @@ func (a *App) ImportConfig(cfg config.Config) error {
 			if group.Enable != nil {
 				enable = *group.Enable
 			}
+			if err := models.ValidateInterfaceName(group.Interface); err != nil {
+				return fmt.Errorf("grup %q: %w", group.Name, err)
+			}
 			err := a.AddGroup(&models.Group{
 				ID:        group.ID,
 				Name:      group.Name,

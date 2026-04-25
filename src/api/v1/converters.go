@@ -33,6 +33,9 @@ func GroupFromReq(req types.GroupReq, existing *models.Group) (*models.Group, er
 	if match, _ := colorRegExp.MatchString(req.Color); match {
 		group.Color = strings.ToLower(req.Color)
 	}
+	if err := models.ValidateInterfaceName(req.Interface); err != nil {
+		return nil, fmt.Errorf("geçersiz arayüz adı: %q", req.Interface)
+	}
 	group.Interface = req.Interface
 	group.Enable = true
 	if req.Enable != nil {

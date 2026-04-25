@@ -175,10 +175,16 @@ func (h *Handler) HtmxUpdateGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	ifaceValue := r.FormValue("interface")
+	if err := models.ValidateInterfaceName(ifaceValue); err != nil {
+		http.Error(w, "Geçersiz arayüz adı", http.StatusBadRequest)
+		return
+	}
+
 	groupWrapper := h.app.Groups()[idx]
 	group := groupWrapper.Model()
 	group.Name = r.FormValue("name")
-	group.Interface = r.FormValue("interface")
+	group.Interface = ifaceValue
 	group.Color = r.FormValue("color")
 	group.Enable = r.FormValue("enable") == "on"
 
