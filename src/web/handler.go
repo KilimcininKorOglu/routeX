@@ -79,6 +79,7 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 		Value:    "",
 		Path:     "/",
 		HttpOnly: true,
+		SameSite: http.SameSiteStrictMode,
 		MaxAge:   -1,
 	})
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
@@ -155,7 +156,7 @@ func (h *Handler) HtmxCreateGroup(w http.ResponseWriter, r *http.Request) {
 		Enable:    true,
 	}
 	if err := h.app.AddGroup(group); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Sunucu hatası", http.StatusInternalServerError)
 		return
 	}
 	ifaces := h.getInterfaces()
@@ -166,12 +167,12 @@ func (h *Handler) HtmxUpdateGroup(w http.ResponseWriter, r *http.Request) {
 	groupID := chi.URLParam(r, "groupID")
 	idx, err := h.findGroupIndex(groupID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		http.Error(w, "Bulunamadı", http.StatusNotFound)
 		return
 	}
 
 	if err := r.ParseForm(); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, "Geçersiz istek", http.StatusBadRequest)
 		return
 	}
 
@@ -202,7 +203,7 @@ func (h *Handler) HtmxDeleteGroup(w http.ResponseWriter, r *http.Request) {
 	groupID := chi.URLParam(r, "groupID")
 	idx, err := h.findGroupIndex(groupID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		http.Error(w, "Bulunamadı", http.StatusNotFound)
 		return
 	}
 
@@ -223,12 +224,12 @@ func (h *Handler) HtmxCreateRule(w http.ResponseWriter, r *http.Request) {
 	groupID := chi.URLParam(r, "groupID")
 	idx, err := h.findGroupIndex(groupID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		http.Error(w, "Bulunamadı", http.StatusNotFound)
 		return
 	}
 
 	if err := r.ParseForm(); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, "Geçersiz istek", http.StatusBadRequest)
 		return
 	}
 
@@ -257,18 +258,18 @@ func (h *Handler) HtmxUpdateRule(w http.ResponseWriter, r *http.Request) {
 
 	groupIdx, err := h.findGroupIndex(groupID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		http.Error(w, "Bulunamadı", http.StatusNotFound)
 		return
 	}
 
 	ruleIdx, err := h.findRuleIndex(groupIdx, ruleID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		http.Error(w, "Bulunamadı", http.StatusNotFound)
 		return
 	}
 
 	if err := r.ParseForm(); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, "Geçersiz istek", http.StatusBadRequest)
 		return
 	}
 
@@ -294,13 +295,13 @@ func (h *Handler) HtmxDeleteRule(w http.ResponseWriter, r *http.Request) {
 
 	groupIdx, err := h.findGroupIndex(groupID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		http.Error(w, "Bulunamadı", http.StatusNotFound)
 		return
 	}
 
 	ruleIdx, err := h.findRuleIndex(groupIdx, ruleID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		http.Error(w, "Bulunamadı", http.StatusNotFound)
 		return
 	}
 
@@ -321,7 +322,8 @@ func (h *Handler) HtmxDeleteRule(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) HtmxSaveConfig(w http.ResponseWriter, r *http.Request) {
 	if err := h.app.SaveConfig(); err != nil {
-		http.Error(w, fmt.Sprintf("Kaydetme başarısız: %v", err), http.StatusInternalServerError)
+		log.Error().Err(err).Msg("config save failed")
+		http.Error(w, "Kaydetme başarısız", http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "text/html")
@@ -334,7 +336,7 @@ func (h *Handler) HtmxMoveGroup(w http.ResponseWriter, r *http.Request) {
 
 	idx, err := h.findGroupIndex(groupID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		http.Error(w, "Bulunamadı", http.StatusNotFound)
 		return
 	}
 
@@ -362,13 +364,13 @@ func (h *Handler) HtmxMoveRule(w http.ResponseWriter, r *http.Request) {
 
 	groupIdx, err := h.findGroupIndex(groupID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		http.Error(w, "Bulunamadı", http.StatusNotFound)
 		return
 	}
 
 	ruleIdx, err := h.findRuleIndex(groupIdx, ruleID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		http.Error(w, "Bulunamadı", http.StatusNotFound)
 		return
 	}
 
@@ -434,7 +436,8 @@ func (h *Handler) ExportConfig(w http.ResponseWriter, r *http.Request) {
 	cfg := h.app.ExportConfig()
 	data, err := yaml.Marshal(cfg)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Dışa aktarma başarısız: %v", err), http.StatusInternalServerError)
+		log.Error().Err(err).Msg("config export failed")
+		http.Error(w, "Dışa aktarma başarısız", http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/x-yaml")
@@ -474,7 +477,8 @@ func (h *Handler) HtmxImportConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.app.ImportConfig(cfg); err != nil {
-		http.Error(w, fmt.Sprintf("İçe aktarma başarısız: %v", err), http.StatusInternalServerError)
+		log.Error().Err(err).Msg("config import failed")
+		http.Error(w, "İçe aktarma başarısız", http.StatusInternalServerError)
 		return
 	}
 
@@ -498,10 +502,12 @@ func (h *Handler) SessionAuthMiddleware(next http.Handler) http.Handler {
 
 		if err := auth.VerifyTokenString(cookie.Value); err != nil {
 			http.SetCookie(w, &http.Cookie{
-				Name:   sessionCookieName,
-				Value:  "",
-				Path:   "/",
-				MaxAge: -1,
+				Name:     sessionCookieName,
+				Value:    "",
+				Path:     "/",
+				HttpOnly: true,
+				SameSite: http.SameSiteStrictMode,
+				MaxAge:   -1,
 			})
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			return
