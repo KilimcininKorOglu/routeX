@@ -134,14 +134,14 @@ jobs:
 
       - name: Upload release asset 1
         if: ${{ github.event_name == 'release' && steps.package_outputs.outputs.package_1_path != '' }}
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
           files: ${{ steps.package_outputs.outputs.package_1_path }}
           token: ${{ secrets.RELEASE_TOKEN }}
 
       - name: Upload release asset 2
         if: ${{ github.event_name == 'release' && steps.package_outputs.outputs.package_2_path != '' }}
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
           files: ${{ steps.package_outputs.outputs.package_2_path }}
           token: ${{ secrets.RELEASE_TOKEN }}
@@ -206,7 +206,7 @@ jobs:
           done
 
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
+        uses: peaceiris/actions-gh-pages@e9c66a37f080288a11235e32cbe2dc5fb3a679cc # v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./repo
