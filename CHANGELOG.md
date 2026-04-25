@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.7.1] - 2026-04-26
+
+### Changed
+- Enable APK package signing and public key distribution
+- Publish job deploys signing public key to GitHub Pages
+- add_repo.sh automatically installs public key for APK verification
+
 ## [1.7.0] - 2026-04-26
 
 ### Added
