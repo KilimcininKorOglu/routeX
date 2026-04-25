@@ -113,6 +113,17 @@ func (h *Handler) HtmxGetStats(w http.ResponseWriter, r *http.Request) {
 	pages.StatsContent(snap, loc).Render(r.Context(), w)
 }
 
+func (h *Handler) HtmxTestDomain(w http.ResponseWriter, r *http.Request) {
+	loc := i18n.FromContext(r.Context())
+	domain := r.URL.Query().Get("domain")
+	if domain == "" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	result := h.app.TestDomain(domain)
+	components.RuleTestResult(result, loc).Render(r.Context(), w)
+}
+
 func (h *Handler) getInterfaces() []string {
 	ifaces, err := h.app.ListInterfaces()
 	if err != nil {

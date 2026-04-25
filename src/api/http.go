@@ -107,6 +107,7 @@ func SetupHTTP(a app.Main, errChan chan error) (*http.Server, error) {
 		r.Get("/settings", h.Settings)
 		r.Get("/stats", h.StatsPage)
 		r.Get("/htmx/stats", h.HtmxGetStats)
+		r.Get("/htmx/rule-test", h.HtmxTestDomain)
 
 		r.Get("/htmx/groups", h.HtmxGetGroups)
 		r.Post("/htmx/groups", h.HtmxCreateGroup)

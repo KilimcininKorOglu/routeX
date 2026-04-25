@@ -83,6 +83,7 @@ func NewRouter(a app.Main) chi.Router {
 		})
 	})
 	r.Get("/stats", h.GetStats)
+	r.Get("/test", h.GetTestDomain)
 	r.Route("/system", func(r chi.Router) {
 		r.Get("/interfaces", h.ListInterfaces)
 		r.Route("/config", func(r chi.Router) {

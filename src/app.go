@@ -193,6 +193,57 @@ func (a *App) GetStats() stats.Snapshot {
 	return snap
 }
 
+// TestDomain checks which rules match the given domain
+func (a *App) TestDomain(domain string) models.TestResult {
+	result := models.TestResult{
+		Domain:  domain,
+		Matches: []models.TestMatch{},
+	}
+
+	if a.recordsCache != nil {
+		aliases := a.recordsCache.GetAliases(domain)
+		if len(aliases) > 1 {
+			result.Aliases = aliases[1:]
+		}
+
+		addresses := a.recordsCache.GetAddresses(domain)
+		for _, addr := range addresses {
+			result.CachedIPs = append(result.CachedIPs, addr.Address.String())
+		}
+	}
+
+	names := []string{domain}
+	if len(result.Aliases) > 0 {
+		names = append(names, result.Aliases...)
+	}
+
+	for _, group := range a.groups {
+		model := group.Model()
+		for _, rule := range model.Rules {
+			if !rule.IsEnabled() {
+				continue
+			}
+			for _, name := range names {
+				if rule.IsMatch(name) {
+					result.Matches = append(result.Matches, models.TestMatch{
+						GroupID:     model.ID.String(),
+						GroupName:   model.Name,
+						GroupColor:  model.Color,
+						Interface:   model.Interface,
+						RuleID:      rule.ID.String(),
+						RuleName:    rule.Name,
+						RuleType:    rule.Type,
+						RulePattern: rule.Rule,
+					})
+					break
+				}
+			}
+		}
+	}
+
+	return result
+}
+
 // SubscriptionManager returns the subscription manager
 func (a *App) SubscriptionManager() *subscription.Manager {
 	return a.subManager

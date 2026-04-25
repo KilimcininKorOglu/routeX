@@ -24,6 +24,7 @@ type Main interface {
 	DnsOverrider() *netfilterTools.PortRemap
 	SubscriptionManager() *subscription.Manager
 	GetStats() stats.Snapshot
+	TestDomain(domain string) models.TestResult
 	LoadConfig() error
 	SaveConfig() error
 	BackupConfig() error

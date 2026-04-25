@@ -1,0 +1,66 @@
+package components
+
+import (
+	"fmt"
+	"routex/i18n"
+	"routex/models"
+	"strings"
+)
+
+templ RuleTestForm(loc *i18n.Localizer) {
+	<div style="margin-bottom:1rem">
+		<div style="display:flex;gap:0.5rem;align-items:center">
+			<input
+				type="text"
+				id="rule-test-input"
+				name="domain"
+				placeholder={ loc.T("test.placeholder") }
+				style="flex:1"
+				hx-get="/htmx/rule-test"
+				hx-trigger="keyup changed delay:500ms"
+				hx-target="#rule-test-result"
+				hx-swap="innerHTML"
+				hx-include="this"
+			/>
+		</div>
+		<div id="rule-test-result"></div>
+	</div>
+}
+
+templ RuleTestResult(result models.TestResult, loc *i18n.Localizer) {
+	if len(result.Matches) > 0 {
+		<div style="margin-top:0.75rem">
+			<div style="font-size:0.8rem;color:#107C10;margin-bottom:0.5rem;font-weight:600">
+				{ loc.Tf("test.match_found", len(result.Matches)) }
+			</div>
+			for _, m := range result.Matches {
+				<div class="card" style="padding:0.5rem 0.75rem;margin-bottom:0.5rem;display:flex;align-items:center;gap:0.5rem">
+					<span style={ fmt.Sprintf("width:8px;height:8px;border-radius:50%%;background:%s;flex-shrink:0", m.GroupColor) }></span>
+					<div style="flex:1;min-width:0">
+						<div style="font-size:0.8rem;font-weight:600">
+							{ m.GroupName }
+							<span style="color:var(--text-2);font-weight:400">→ { m.Interface }</span>
+						</div>
+						<div style="font-size:0.75rem;color:var(--text-2)">
+							{ loc.T("test.rule_label") }: "{ m.RulePattern }" ({ m.RuleType })
+						</div>
+					</div>
+				</div>
+			}
+		</div>
+	} else if result.Domain != "" {
+		<div style="margin-top:0.75rem;font-size:0.8rem;color:var(--text-2);text-align:center;padding:0.75rem">
+			{ loc.T("test.no_match") }
+		</div>
+	}
+	if len(result.CachedIPs) > 0 {
+		<div style="font-size:0.75rem;color:var(--text-2);margin-top:0.5rem">
+			{ loc.T("test.cache_label") }: { strings.Join(result.CachedIPs, ", ") }
+		</div>
+	}
+	if len(result.Aliases) > 0 {
+		<div style="font-size:0.75rem;color:var(--text-2);margin-top:0.25rem">
+			{ loc.T("test.aliases_label") }: { strings.Join(result.Aliases, ", ") }
+		</div>
+	}
+}

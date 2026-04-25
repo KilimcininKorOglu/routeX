@@ -614,6 +614,18 @@ func (h *Handler) GetStats(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJson(w, http.StatusOK, snap)
 }
 
+// GetTestDomain tests a domain against all rules
+func (h *Handler) GetTestDomain(w http.ResponseWriter, r *http.Request) {
+	domain := r.URL.Query().Get("domain")
+	if domain == "" {
+		loc := i18n.FromContext(r.Context())
+		utils.WriteError(w, http.StatusBadRequest, loc.T("test.invalid_domain"))
+		return
+	}
+	result := h.app.TestDomain(domain)
+	utils.WriteJson(w, http.StatusOK, result)
+}
+
 func subscriptionStatusFromMeta(meta *subscription.Metadata) types.SubscriptionStatus {
 	var lastUpdated string
 	if !meta.LastUpdated.IsZero() {

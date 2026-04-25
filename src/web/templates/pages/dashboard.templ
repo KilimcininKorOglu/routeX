@@ -9,6 +9,7 @@ import (
 templ Dashboard(loc *i18n.Localizer) {
 	@templates.AppShell("groups", loc) {
 		@components.SearchBar(loc)
+		@components.RuleTestForm(loc)
 		<div id="groups-content" hx-get="/htmx/groups" hx-trigger="load" hx-swap="innerHTML">
 			<div style="text-align:center;padding:3rem;color:var(--text-2)">
 				<div class="spinner" style="width:2rem;height:2rem;margin:0 auto 1rem"></div>
