@@ -10,7 +10,7 @@ import (
 
 const (
 	jwtIssuer = "routex"
-	jwtYears  = 20
+	jwtExpiry = 7 * 24 * time.Hour
 )
 
 func Authenticate(login, password string) (string, error) {
@@ -43,7 +43,7 @@ func issueToken(login, passwordHash string) (string, error) {
 	signingKey := deriveSigningKey(secret, passwordHash)
 
 	issuedAt := time.Now().UTC()
-	expiresAt := issuedAt.AddDate(jwtYears, 0, 0)
+	expiresAt := issuedAt.Add(jwtExpiry)
 
 	claims := jwtClaims{
 		Sub: login,
