@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.7.0] - 2026-04-26
+
+### Added
+- WebSocket live stats with 1-second push updates on the statistics page
+- Event hub with client registry and broadcast (max 10 concurrent clients)
+- Per-client stats pump goroutine with JSON snapshot delivery
+- Connection status indicator (Connecting / Live / Offline)
+- Targeted DOM updates via data-stat attributes (no full page re-render)
+- Graceful fallback to HTMX 5-second polling on WebSocket disconnect
+
 ## [1.6.0] - 2026-04-26
 
 ### Added
