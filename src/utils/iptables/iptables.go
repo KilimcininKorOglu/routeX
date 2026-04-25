@@ -21,7 +21,7 @@ const (
 )
 
 var (
-	ErrChainNotInitialized = errors.New("zincir başlatılmamış")
+	ErrChainNotInitialized = errors.New("chain not initialized")
 )
 
 type IPTables struct {
@@ -140,7 +140,7 @@ func (ipt *IPTables) GetCurrentRules() (map[string]map[string][]Rule, error) {
 				chainName = string(line[1 : 1+spaceIdx])
 			}
 			if chainName == "" {
-				return nil, fmt.Errorf("geçersiz zincir bildirimi")
+				return nil, fmt.Errorf("invalid chain declaration")
 			}
 			if rules[currentTable][chainName] == nil {
 				rules[currentTable][chainName] = []Rule{}
@@ -148,17 +148,17 @@ func (ipt *IPTables) GetCurrentRules() (map[string]map[string][]Rule, error) {
 
 		case '-':
 			if currentTable == "" {
-				return nil, fmt.Errorf("kural tablo dışında")
+				return nil, fmt.Errorf("rule outside of table")
 			}
 
 			fields := splitFields(line)
 			if len(fields) < 2 {
-				return nil, fmt.Errorf("geçersiz kural: %q", line)
+				return nil, fmt.Errorf("invalid rule: %q", line)
 			}
 
 			chainName := string(fields[1])
 			if len(fields[0]) < 2 {
-				return nil, fmt.Errorf("geçersiz kural komutu: %q", fields[0])
+				return nil, fmt.Errorf("invalid rule command: %q", fields[0])
 			}
 			switch fields[0][1] {
 			case 'A': // Append
@@ -166,7 +166,7 @@ func (ipt *IPTables) GetCurrentRules() (map[string]map[string][]Rule, error) {
 				rules[currentTable][chainName] = append(rules[currentTable][chainName], fields[2:])
 
 			default:
-				return nil, fmt.Errorf("bilinmeyen iptables komutu %q", fields[0])
+				return nil, fmt.Errorf("unknown iptables command %q", fields[0])
 			}
 
 		case '#':
@@ -176,7 +176,7 @@ func (ipt *IPTables) GetCurrentRules() (map[string]map[string][]Rule, error) {
 			currentTable = ""
 
 		default:
-			return nil, fmt.Errorf("bilinmeyen iptables girdisi %q", line)
+			return nil, fmt.Errorf("unknown iptables entry %q", line)
 		}
 	}
 

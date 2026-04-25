@@ -18,10 +18,10 @@ import (
 )
 
 var (
-	ErrAlreadyRunning           = errors.New("zaten çalışıyor")
-	ErrGroupIDConflict          = errors.New("grup kimliği çakışması")
-	ErrRuleIDConflict           = errors.New("kural kimliği çakışması")
-	ErrConfigUnsupportedVersion = errors.New("desteklenmeyen yapılandırma sürümü")
+	ErrAlreadyRunning           = errors.New("already running")
+	ErrGroupIDConflict          = errors.New("group ID conflict")
+	ErrRuleIDConflict           = errors.New("rule ID conflict")
+	ErrConfigUnsupportedVersion = errors.New("unsupported configuration version")
 )
 
 // App is the main application core structure
@@ -88,7 +88,7 @@ func (a *App) AddGroup(groupModel *models.Group) error {
 
 	grp, err := NewGroup(groupModel, a)
 	if err != nil {
-		return fmt.Errorf("grup oluşturulamadı: %w", err)
+		return fmt.Errorf("failed to create group: %w", err)
 	}
 	a.groups = append(a.groups, grp)
 
@@ -100,10 +100,10 @@ func (a *App) AddGroup(groupModel *models.Group) error {
 	// If the application is already running, enable the group and perform synchronization
 	if a.enabled.Load() {
 		if err = grp.Enable(); err != nil {
-			return fmt.Errorf("grup etkinleştirilemedi: %w", err)
+			return fmt.Errorf("failed to enable group: %w", err)
 		}
 		if err = grp.Sync(); err != nil {
-			return fmt.Errorf("grup senkronize edilemedi: %w", err)
+			return fmt.Errorf("failed to sync group: %w", err)
 		}
 	}
 	return nil
@@ -123,7 +123,7 @@ func (a *App) SwapGroups(i, j int) {
 func (a *App) ListInterfaces() ([]net.Interface, error) {
 	interfaces, err := net.Interfaces()
 	if err != nil {
-		return nil, fmt.Errorf("ağ arayüzleri alınamadı: %w", err)
+		return nil, fmt.Errorf("failed to get network interfaces: %w", err)
 	}
 
 	if a.config.ShowAllInterfaces {

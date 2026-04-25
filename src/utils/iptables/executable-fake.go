@@ -121,7 +121,7 @@ func (ipt *FakeIPTables) Restore(data []byte) error {
 		case ':': // Chain declaration
 			fields := splitFields(line[1:])
 			if len(fields) == 0 {
-				return fmt.Errorf("geçersiz zincir bildirimi")
+				return fmt.Errorf("invalid chain declaration")
 			}
 			chain := string(fields[0])
 			if ipt.rules[currentTable][chain] == nil {
@@ -130,12 +130,12 @@ func (ipt *FakeIPTables) Restore(data []byte) error {
 
 		case '-': // Operation
 			if currentTable == "" {
-				return fmt.Errorf("kural tablo dışında")
+				return fmt.Errorf("rule outside of table")
 			}
 
 			fields := strings.Fields(string(line))
 			if len(fields) < 2 {
-				return fmt.Errorf("geçersiz kural: %q", line)
+				return fmt.Errorf("invalid rule: %q", line)
 			}
 
 			chain := fields[1]
@@ -148,11 +148,11 @@ func (ipt *FakeIPTables) Restore(data []byte) error {
 
 			case 'I': // Insert
 				if len(fields) < 3 {
-					return fmt.Errorf("geçersiz ekleme kuralı")
+					return fmt.Errorf("invalid insert rule")
 				}
 				pos, err := strconv.Atoi(fields[2])
 				if err != nil || pos < 1 {
-					return fmt.Errorf("geçersiz ekleme konumu")
+					return fmt.Errorf("invalid insert position")
 				}
 
 				r := ruleFromStrings(fields[3:])
@@ -183,7 +183,7 @@ func (ipt *FakeIPTables) Restore(data []byte) error {
 				}
 
 				if !found {
-					return fmt.Errorf("silinecek kural bulunamadı: %v", fields[2:])
+					return fmt.Errorf("rule to delete not found: %v", fields[2:])
 				}
 
 			case 'F': // Flush chain
@@ -191,12 +191,12 @@ func (ipt *FakeIPTables) Restore(data []byte) error {
 
 			case 'X': // Delete chain
 				if len(ipt.rules[currentTable][chain]) != 0 {
-					return fmt.Errorf("boş olmayan zincir silinemez: %s", chain)
+					return fmt.Errorf("cannot delete non-empty chain: %s", chain)
 				}
 				delete(ipt.rules[currentTable], chain)
 
 			default:
-				return fmt.Errorf("bilinmeyen iptables komutu %q", fields[0])
+				return fmt.Errorf("unknown iptables command %q", fields[0])
 			}
 
 		case '#': // Comment
@@ -206,7 +206,7 @@ func (ipt *FakeIPTables) Restore(data []byte) error {
 			currentTable = ""
 
 		default:
-			return fmt.Errorf("bilinmeyen iptables girdisi %q", line)
+			return fmt.Errorf("unknown iptables entry %q", line)
 		}
 	}
 

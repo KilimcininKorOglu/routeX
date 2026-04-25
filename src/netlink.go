@@ -16,7 +16,7 @@ func subscribeLinkUpdates() (chan netlink.LinkUpdate, chan struct{}, error) {
 	linkUpdateChannel := make(chan netlink.LinkUpdate)
 	done := make(chan struct{})
 	if err := netlink.LinkSubscribe(linkUpdateChannel, done); err != nil {
-		return nil, nil, fmt.Errorf("bağlantı güncellemelerine abone olunamadı: %w", err)
+		return nil, nil, fmt.Errorf("failed to subscribe to link updates: %w", err)
 	}
 	return linkUpdateChannel, done, nil
 }

@@ -13,21 +13,21 @@ var (
 
 func ValidateInterfaceName(name string) error {
 	if !ifaceNameRegex.MatchString(name) {
-		return fmt.Errorf("geçersiz arayüz adı: %q", name)
+		return fmt.Errorf("invalid interface name: %q", name)
 	}
 	return nil
 }
 
 func ValidateChainPrefix(prefix string) error {
 	if !chainPrefixRegex.MatchString(prefix) {
-		return fmt.Errorf("geçersiz zincir ön eki: %q", prefix)
+		return fmt.Errorf("invalid chain prefix: %q", prefix)
 	}
 	return nil
 }
 
 func ValidateIpsetPrefix(prefix string) error {
 	if !ipsetPrefixRegex.MatchString(prefix) {
-		return fmt.Errorf("geçersiz ipset ön eki: %q", prefix)
+		return fmt.Errorf("invalid ipset prefix: %q", prefix)
 	}
 	return nil
 }

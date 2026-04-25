@@ -27,7 +27,7 @@ func ReadJson[T any](r *http.Request) (T, error) {
 	var req T
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		err = fmt.Errorf("istek ayrıştırılamadı: %w", err)
+		err = fmt.Errorf("failed to parse request: %w", err)
 	}
 	return req, err
 }

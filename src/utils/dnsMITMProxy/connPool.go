@@ -30,7 +30,7 @@ func (p *connPool) Get(ctx context.Context) (net.Conn, error) {
 	p.mu.Lock()
 	if p.closed {
 		p.mu.Unlock()
-		return nil, errors.New("havuz kapatılmış")
+		return nil, errors.New("pool is closed")
 	}
 	p.mu.Unlock()
 

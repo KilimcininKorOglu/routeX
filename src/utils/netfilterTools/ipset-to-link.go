@@ -53,19 +53,19 @@ func (r *IPSetToLink) insertIPTablesRules(ipt *iptables.IPTables) error {
 
 	err := ipt.RegisterChainOverride("filter", r.chainName)
 	if err != nil {
-		return fmt.Errorf("zincir oluşturulamadı: %w", err)
+		return fmt.Errorf("failed to create chain: %w", err)
 	}
 
 	if r.ifaceName != Blackhole {
 		err = ipt.Append("filter", r.chainName, "-o", r.ifaceName, "-m", "set", "--match-set", ipsetName, "dst", "-j", "ACCEPT")
 		if err != nil {
-			return fmt.Errorf("IPv4 koruma düzeltme başarısız: %w", err)
+			return fmt.Errorf("failed to add IPv4 protection fix: %w", err)
 		}
 	}
 
 	err = ipt.Append("filter", "FORWARD", "-j", r.chainName)
 	if err != nil {
-		return fmt.Errorf("PREROUTING zincirine kural eklenemedi: %w", err)
+		return fmt.Errorf("failed to add rule to FORWARD chain: %w", err)
 	}
 
 	/*
@@ -74,7 +74,7 @@ func (r *IPSetToLink) insertIPTablesRules(ipt *iptables.IPTables) error {
 
 	err = ipt.RegisterChainOverride("mangle", r.chainName)
 	if err != nil {
-		return fmt.Errorf("zincir oluşturulamadı: %w", err)
+		return fmt.Errorf("failed to create chain: %w", err)
 	}
 
 	for _, iptablesArgs := range [][]string{
@@ -83,13 +83,13 @@ func (r *IPSetToLink) insertIPTablesRules(ipt *iptables.IPTables) error {
 	} {
 		err = ipt.Append("mangle", r.chainName, iptablesArgs...)
 		if err != nil {
-			return fmt.Errorf("kural eklenemedi: %w", err)
+			return fmt.Errorf("failed to add rule: %w", err)
 		}
 	}
 
 	err = ipt.Append("mangle", "PREROUTING", "-j", r.chainName)
 	if err != nil {
-		return fmt.Errorf("PREROUTING zincirine kural eklenemedi: %w", err)
+		return fmt.Errorf("failed to add rule to PREROUTING chain: %w", err)
 	}
 
 	/*
@@ -98,22 +98,22 @@ func (r *IPSetToLink) insertIPTablesRules(ipt *iptables.IPTables) error {
 
 	err = ipt.RegisterChainOverride("nat", r.chainName)
 	if err != nil {
-		return fmt.Errorf("zincir oluşturulamadı: %w", err)
+		return fmt.Errorf("failed to create chain: %w", err)
 	}
 
 	err = ipt.Append("nat", r.chainName, "-m", "set", "--match-set", ipsetName, "dst", "-j", "MASQUERADE")
 	if err != nil {
-		return fmt.Errorf("kural oluşturulamadı: %w", err)
+		return fmt.Errorf("failed to create rule: %w", err)
 	}
 
 	err = ipt.Append("nat", "POSTROUTING", "-j", r.chainName)
 	if err != nil {
-		return fmt.Errorf("POSTROUTING zincirine kural eklenemedi: %w", err)
+		return fmt.Errorf("failed to add rule to POSTROUTING chain: %w", err)
 	}
 
 	err = ipt.Commit()
 	if err != nil {
-		return fmt.Errorf("iptables kuralları uygulanamadı: %w", err)
+		return fmt.Errorf("failed to apply iptables rules: %w", err)
 	}
 	return nil
 }
@@ -130,12 +130,12 @@ func (r *IPSetToLink) deleteIPTablesRules(ipt *iptables.IPTables) error {
 
 	err := ipt.RegisterChainDelete("filter", r.chainName)
 	if err != nil {
-		errs = append(errs, fmt.Errorf("zincir temizlenemedi: %w", err))
+		errs = append(errs, fmt.Errorf("failed to clean chain: %w", err))
 	}
 
 	err = ipt.Delete("filter", "FORWARD", "-j", r.chainName)
 	if err != nil {
-		errs = append(errs, fmt.Errorf("zincir bağlantısı kaldırılamadı: %w", err))
+		errs = append(errs, fmt.Errorf("failed to unlink chain: %w", err))
 	}
 
 	/*
@@ -144,12 +144,12 @@ func (r *IPSetToLink) deleteIPTablesRules(ipt *iptables.IPTables) error {
 
 	err = ipt.RegisterChainDelete("mangle", r.chainName)
 	if err != nil {
-		errs = append(errs, fmt.Errorf("zincir silinemedi: %w", err))
+		errs = append(errs, fmt.Errorf("failed to delete chain: %w", err))
 	}
 
 	err = ipt.Delete("mangle", "PREROUTING", "-j", r.chainName)
 	if err != nil {
-		errs = append(errs, fmt.Errorf("zincir bağlantısı kaldırılamadı: %w", err))
+		errs = append(errs, fmt.Errorf("failed to unlink chain: %w", err))
 	}
 
 	/*
@@ -158,17 +158,17 @@ func (r *IPSetToLink) deleteIPTablesRules(ipt *iptables.IPTables) error {
 
 	err = ipt.RegisterChainDelete("nat", r.chainName)
 	if err != nil {
-		errs = append(errs, fmt.Errorf("zincir silinemedi: %w", err))
+		errs = append(errs, fmt.Errorf("failed to delete chain: %w", err))
 	}
 
 	err = ipt.Delete("nat", "POSTROUTING", "-j", r.chainName)
 	if err != nil {
-		errs = append(errs, fmt.Errorf("zincir bağlantısı kaldırılamadı: %w", err))
+		errs = append(errs, fmt.Errorf("failed to unlink chain: %w", err))
 	}
 
 	err = ipt.Commit()
 	if err != nil {
-		errs = append(errs, fmt.Errorf("iptables kuralları uygulanamadı: %w", err))
+		errs = append(errs, fmt.Errorf("failed to apply iptables rules: %w", err))
 	}
 	return errors.Join(errs...)
 }
@@ -182,7 +182,7 @@ func (r *IPSetToLink) insertIPRule() error {
 		_ = netlink.RuleDel(rule)
 		err := netlink.RuleAdd(rule)
 		if err != nil {
-			return fmt.Errorf("işaretli paketler tabloya eşlenemedi: %w", err)
+			return fmt.Errorf("failed to map marked packets to table: %w", err)
 		}
 		r.ip4Rule = rule
 	}
@@ -195,7 +195,7 @@ func (r *IPSetToLink) insertIPRule() error {
 		_ = netlink.RuleDel(rule)
 		err := netlink.RuleAdd(rule)
 		if err != nil {
-			return fmt.Errorf("işaretli paketler tabloya eşlenemedi: %w", err)
+			return fmt.Errorf("failed to map marked packets to table: %w", err)
 		}
 		r.ip6Rule = rule
 	}
@@ -209,7 +209,7 @@ func (r *IPSetToLink) deleteIPRule() error {
 	if r.ip4Rule != nil {
 		err := netlink.RuleDel(r.ip4Rule)
 		if err != nil {
-			errs = append(errs, fmt.Errorf("kural silinirken hata: %w", err))
+			errs = append(errs, fmt.Errorf("failed to delete rule: %w", err))
 		}
 		r.ip4Rule = nil
 	}
@@ -217,7 +217,7 @@ func (r *IPSetToLink) deleteIPRule() error {
 	if r.ip6Rule != nil {
 		err := netlink.RuleDel(r.ip6Rule)
 		if err != nil {
-			errs = append(errs, fmt.Errorf("kural silinirken hata: %w", err))
+			errs = append(errs, fmt.Errorf("failed to delete rule: %w", err))
 		}
 		r.ip6Rule = nil
 	}
@@ -238,7 +238,7 @@ func (r *IPSetToLink) insertIPRoute() error {
 		}
 		err := netlink.RouteAdd(route)
 		if err != nil && !errors.Is(err, unix.EEXIST) {
-			return fmt.Errorf("IPv4 blackhole rotası eklenirken hata: %w", err)
+			return fmt.Errorf("failed to add IPv4 blackhole route: %w", err)
 		}
 		r.ip4Route[0] = route
 
@@ -249,7 +249,7 @@ func (r *IPSetToLink) insertIPRoute() error {
 					log.Warn().Str("iface", r.ifaceName).Msg("interface not found, it can be catched later")
 					return nil
 				}
-				return fmt.Errorf("ağ arayüzü alınırken hata: %w", err)
+				return fmt.Errorf("failed to get network interface: %w", err)
 			}
 			if iface.Attrs().Flags&net.FlagUp == 0 {
 				log.Warn().Str("iface", r.ifaceName).Msg("interface is down")
@@ -274,7 +274,7 @@ func (r *IPSetToLink) insertIPRoute() error {
 
 			err = netlink.RouteAdd(route)
 			if err != nil && !errors.Is(err, unix.EEXIST) {
-				return fmt.Errorf("IPv4 arayüz rotası eklenirken hata: %w", err)
+				return fmt.Errorf("failed to add IPv4 interface route: %w", err)
 			}
 			r.ip4Route[1] = route
 		}
@@ -290,7 +290,7 @@ func (r *IPSetToLink) insertIPRoute() error {
 		}
 		err := netlink.RouteAdd(route)
 		if err != nil && !errors.Is(err, unix.EEXIST) {
-			return fmt.Errorf("IPv6 blackhole rotası eklenirken hata: %w", err)
+			return fmt.Errorf("failed to add IPv6 blackhole route: %w", err)
 		}
 		r.ip6Route[0] = route
 
@@ -301,7 +301,7 @@ func (r *IPSetToLink) insertIPRoute() error {
 					log.Warn().Str("iface", r.ifaceName).Msg("interface not found, it can be catched later")
 					return nil
 				}
-				return fmt.Errorf("ağ arayüzü alınırken hata: %w", err)
+				return fmt.Errorf("failed to get network interface: %w", err)
 			}
 			if iface.Attrs().Flags&net.FlagUp == 0 {
 				log.Warn().Str("iface", r.ifaceName).Msg("interface is down")
@@ -327,7 +327,7 @@ func (r *IPSetToLink) insertIPRoute() error {
 
 			err = netlink.RouteAdd(route)
 			if err != nil && !errors.Is(err, unix.EEXIST) {
-				return fmt.Errorf("IPv6 arayüz rotası eklenirken hata: %w", err)
+				return fmt.Errorf("failed to add IPv6 interface route: %w", err)
 			}
 			r.ip6Route[1] = route
 		}
@@ -348,7 +348,7 @@ func getGwFromIface(iface netlink.Link, family int) (net.IP, error) {
 			return route.Gw, nil
 		}
 	}
-	return nil, fmt.Errorf("arayüz için ağ geçidi bulunamadı: %s", iface.Attrs().Name)
+	return nil, fmt.Errorf("gateway not found for interface: %s", iface.Attrs().Name)
 }
 
 func (r *IPSetToLink) deleteIPRoute() error {
@@ -360,7 +360,7 @@ func (r *IPSetToLink) deleteIPRoute() error {
 		}
 		err := netlink.RouteDel(r.ip4Route[i])
 		if err != nil {
-			errs = append(errs, fmt.Errorf("rota silinirken hata: %w", err))
+			errs = append(errs, fmt.Errorf("failed to delete route: %w", err))
 		}
 		r.ip4Route[i] = nil
 	}
@@ -371,7 +371,7 @@ func (r *IPSetToLink) deleteIPRoute() error {
 		}
 		err := netlink.RouteDel(r.ip6Route[i])
 		if err != nil {
-			errs = append(errs, fmt.Errorf("rota silinirken hata: %w", err))
+			errs = append(errs, fmt.Errorf("failed to delete route: %w", err))
 		}
 		r.ip6Route[i] = nil
 	}
@@ -386,7 +386,7 @@ func (r *IPSetToLink) getUnusedMarkAndTable() (idx uint32, err error) {
 
 	rules, err := netlink.RuleList(nl.FAMILY_ALL)
 	if err != nil {
-		return 0, fmt.Errorf("kurallar alınırken hata: %w", err)
+		return 0, fmt.Errorf("failed to get rules: %w", err)
 	}
 	for _, rule := range rules {
 		markMap[rule.Mark] = struct{}{}
@@ -395,7 +395,7 @@ func (r *IPSetToLink) getUnusedMarkAndTable() (idx uint32, err error) {
 
 	routes, err := netlink.RouteListFiltered(nl.FAMILY_ALL, &netlink.Route{}, netlink.RT_FILTER_TABLE)
 	if err != nil {
-		return 0, fmt.Errorf("rotalar alınırken hata: %w", err)
+		return 0, fmt.Errorf("failed to get routes: %w", err)
 	}
 	for _, route := range routes {
 		tableMap[route.Table] = struct{}{}

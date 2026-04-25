@@ -68,7 +68,7 @@ func (p *DNSMITMProxy) requestUpstreamDNS(ctx context.Context, req []byte, netwo
 
 	upstreamConn, err := pool.Get(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("DNS üst sunucuya bağlantı kurulamadı: %w", err)
+		return nil, fmt.Errorf("failed to connect to DNS upstream server: %w", err)
 	}
 
 	// Set deadline based on context or default timeout
@@ -79,7 +79,7 @@ func (p *DNSMITMProxy) requestUpstreamDNS(ctx context.Context, req []byte, netwo
 	err = upstreamConn.SetDeadline(deadline)
 	if err != nil {
 		_ = upstreamConn.Close()
-		return nil, fmt.Errorf("zaman sınırı ayarlanamadı: %w", err)
+		return nil, fmt.Errorf("failed to set deadline: %w", err)
 	}
 
 	if network == "tcp" {
@@ -87,14 +87,14 @@ func (p *DNSMITMProxy) requestUpstreamDNS(ctx context.Context, req []byte, netwo
 		_, err = upstreamConn.Write(lenBuf)
 		if err != nil {
 			_ = upstreamConn.Close()
-			return nil, fmt.Errorf("uzunluk yazılamadı: %w", err)
+			return nil, fmt.Errorf("failed to write length: %w", err)
 		}
 	}
 
 	_, err = upstreamConn.Write(req)
 	if err != nil {
 		_ = upstreamConn.Close()
-		return nil, fmt.Errorf("istek yazılamadı: %w", err)
+		return nil, fmt.Errorf("failed to write request: %w", err)
 	}
 
 	var resp []byte
@@ -104,19 +104,19 @@ func (p *DNSMITMProxy) requestUpstreamDNS(ctx context.Context, req []byte, netwo
 		_, err = io.ReadFull(upstreamConn, lenBuf)
 		if err != nil {
 			_ = upstreamConn.Close()
-			return nil, fmt.Errorf("uzunluk okunamadı: %w", err)
+			return nil, fmt.Errorf("failed to read length: %w", err)
 		}
 		respLen := int(lenBuf[0])<<8 | int(lenBuf[1])
 		if respLen > maxTCPMsgSize {
 			_ = upstreamConn.Close()
-			return nil, fmt.Errorf("yanıt çok büyük: %d", respLen)
+			return nil, fmt.Errorf("response too large: %d", respLen)
 		}
 
 		resp = make([]byte, respLen)
 		_, err = io.ReadFull(upstreamConn, resp)
 		if err != nil {
 			_ = upstreamConn.Close()
-			return nil, fmt.Errorf("yanıt okunamadı: %w", err)
+			return nil, fmt.Errorf("failed to read response: %w", err)
 		}
 	} else {
 		bufPtr := p.bufferPool.Get().(*[]byte)
@@ -126,7 +126,7 @@ func (p *DNSMITMProxy) requestUpstreamDNS(ctx context.Context, req []byte, netwo
 		n, err := upstreamConn.Read(buf)
 		if err != nil {
 			_ = upstreamConn.Close()
-			return nil, fmt.Errorf("yanıt okunamadı: %w", err)
+			return nil, fmt.Errorf("failed to read response: %w", err)
 		}
 		resp = make([]byte, n)
 		copy(resp, buf[:n])
@@ -148,19 +148,19 @@ func (p *DNSMITMProxy) processReq(ctx context.Context, clientAddr net.Addr, req 
 	if p.RequestHook != nil || p.ResponseHook != nil {
 		err := reqMsg.Unpack(req)
 		if err != nil {
-			return nil, fmt.Errorf("istek ayrıştırılamadı: %w", err)
+			return nil, fmt.Errorf("failed to parse request: %w", err)
 		}
 	}
 
 	if p.RequestHook != nil {
 		modifiedReq, modifiedResp, err := p.RequestHook(clientAddr, reqMsg, network)
 		if err != nil {
-			return nil, fmt.Errorf("istek kanca hatası: %w", err)
+			return nil, fmt.Errorf("request hook error: %w", err)
 		}
 		if modifiedResp != nil {
 			resp, err := modifiedResp.Pack()
 			if err != nil {
-				return nil, fmt.Errorf("değiştirilmiş yanıt gönderilemedi: %w", err)
+				return nil, fmt.Errorf("failed to send modified response: %w", err)
 			}
 			return resp, nil
 		}
@@ -168,7 +168,7 @@ func (p *DNSMITMProxy) processReq(ctx context.Context, clientAddr net.Addr, req 
 			reqMsg = *modifiedReq
 			req, err = reqMsg.Pack()
 			if err != nil {
-				return nil, fmt.Errorf("değiştirilmiş istek paketlenemedi: %w", err)
+				return nil, fmt.Errorf("failed to pack modified request: %w", err)
 			}
 		}
 	}
@@ -180,7 +180,7 @@ func (p *DNSMITMProxy) processReq(ctx context.Context, clientAddr net.Addr, req 
 
 	resp, err := p.requestUpstreamDNS(ctx, req, network)
 	if err != nil {
-		return nil, fmt.Errorf("istek gönderilemedi: %w", err)
+		return nil, fmt.Errorf("failed to send request: %w", err)
 	}
 
 	if p.ResponseHook != nil {
@@ -188,17 +188,17 @@ func (p *DNSMITMProxy) processReq(ctx context.Context, clientAddr net.Addr, req 
 		err = respMsg.Unpack(resp)
 		respMsg.Compress = true
 		if err != nil {
-			return nil, fmt.Errorf("yanıt ayrıştırılamadı: %w", err)
+			return nil, fmt.Errorf("failed to parse response: %w", err)
 		}
 
 		modifiedResp, err := p.ResponseHook(clientAddr, reqMsg, respMsg, network)
 		if err != nil {
-			return nil, fmt.Errorf("yanıt kanca hatası: %w", err)
+			return nil, fmt.Errorf("response hook error: %w", err)
 		}
 		if modifiedResp != nil {
 			resp, err = modifiedResp.Pack()
 			if err != nil {
-				return nil, fmt.Errorf("değiştirilmiş yanıt gönderilemedi: %w", err)
+				return nil, fmt.Errorf("failed to send modified response: %w", err)
 			}
 			return resp, nil
 		}
@@ -287,7 +287,7 @@ func (p *DNSMITMProxy) handleTCPConnection(ctx context.Context, clientConn net.C
 func (p *DNSMITMProxy) ListenTCP(ctx context.Context, addr *net.TCPAddr) error {
 	listener, err := net.ListenTCP("tcp", addr)
 	if err != nil {
-		return fmt.Errorf("TCP portu dinleme başarısız: %v", err)
+		return fmt.Errorf("failed to listen on TCP port: %v", err)
 	}
 	defer func() { _ = listener.Close() }()
 
@@ -375,7 +375,7 @@ func (p *DNSMITMProxy) handleUDPConnection(ctx context.Context, pconn4 *ipv4.Pac
 func (p *DNSMITMProxy) ListenUDP(ctx context.Context, addr *net.UDPAddr) error {
 	conn, err := net.ListenUDP("udp", addr)
 	if err != nil {
-		return fmt.Errorf("UDP portu dinleme başarısız: %v", err)
+		return fmt.Errorf("failed to listen on UDP port: %v", err)
 	}
 	defer func() { _ = conn.Close() }()
 
@@ -390,13 +390,13 @@ func (p *DNSMITMProxy) ListenUDP(ctx context.Context, addr *net.UDPAddr) error {
 	if useIPv4Only {
 		pconn4 = ipv4.NewPacketConn(conn)
 		if err := pconn4.SetControlMessage(ipv4.FlagDst|ipv4.FlagInterface, true); err != nil {
-			return fmt.Errorf("IPv4 kontrol mesajı etkinleştirilemedi: %w", err)
+			return fmt.Errorf("failed to enable IPv4 control message: %w", err)
 		}
 	} else {
 		// Dual-stack or IPv6-only: read via IPv6, write via appropriate conn
 		pconn6 = ipv6.NewPacketConn(conn)
 		if err := pconn6.SetControlMessage(ipv6.FlagDst|ipv6.FlagInterface, true); err != nil {
-			return fmt.Errorf("IPv6 kontrol mesajı etkinleştirilemedi: %w", err)
+			return fmt.Errorf("failed to enable IPv6 control message: %w", err)
 		}
 		// Need pconn4 for writing responses to IPv4 clients in dual-stack mode
 		pconn4 = ipv4.NewPacketConn(conn)

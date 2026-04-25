@@ -34,22 +34,22 @@ func (a *App) startDNSListeners(ctx context.Context, errChan chan error) {
 	go func() {
 		addr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", a.config.DNSProxy.Host.Address, a.config.DNSProxy.Host.Port))
 		if err != nil {
-			errChan <- fmt.Errorf("UDP adresi çözümlenemedi: %v", err)
+			errChan <- fmt.Errorf("failed to resolve UDP address: %v", err)
 			return
 		}
 		if err = a.dnsMITM.ListenUDP(ctx, addr); err != nil {
-			errChan <- fmt.Errorf("DNS UDP vekil sunucusu başlatılamadı: %v", err)
+			errChan <- fmt.Errorf("failed to start DNS UDP proxy server: %v", err)
 		}
 	}()
 
 	go func() {
 		addr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:%d", a.config.DNSProxy.Host.Address, a.config.DNSProxy.Host.Port))
 		if err != nil {
-			errChan <- fmt.Errorf("TCP adresi çözümlenemedi: %v", err)
+			errChan <- fmt.Errorf("failed to resolve TCP address: %v", err)
 			return
 		}
 		if err = a.dnsMITM.ListenTCP(ctx, addr); err != nil {
-			errChan <- fmt.Errorf("DNS TCP vekil sunucusu başlatılamadı: %v", err)
+			errChan <- fmt.Errorf("failed to start DNS TCP proxy server: %v", err)
 		}
 	}()
 }

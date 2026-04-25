@@ -68,7 +68,7 @@ func (r *IPSet) AddIPv4Subnet(subnet IPv4Subnet, timeout IPSetTimeout) error {
 		Replace: true,
 	})
 	if err != nil {
-		return fmt.Errorf("adres eklenemedi: %w", err)
+		return fmt.Errorf("failed to add address: %w", err)
 	}
 
 	return nil
@@ -93,7 +93,7 @@ func (r *IPSet) AddIPv6Subnet(subnet IPv6Subnet, timeout IPSetTimeout) error {
 		Replace: true,
 	})
 	if err != nil {
-		return fmt.Errorf("adres eklenemedi: %w", err)
+		return fmt.Errorf("failed to add address: %w", err)
 	}
 
 	return nil
@@ -112,7 +112,7 @@ func (r *IPSet) DelIPv4Subnet(subnet IPv4Subnet) error {
 		CIDR: subnet.CIDR,
 	})
 	if err != nil {
-		return fmt.Errorf("adres silinemedi: %w", err)
+		return fmt.Errorf("failed to delete address: %w", err)
 	}
 
 	return nil
@@ -131,7 +131,7 @@ func (r *IPSet) DelIPv6Subnet(subnet IPv6Subnet) error {
 		CIDR: subnet.CIDR,
 	})
 	if err != nil {
-		return fmt.Errorf("adres silinemedi: %w", err)
+		return fmt.Errorf("failed to delete address: %w", err)
 	}
 
 	return nil
@@ -207,7 +207,7 @@ func (r *IPSet) ipsetCreate() error {
 		Family:  unix.AF_INET,
 	})
 	if err != nil {
-		return fmt.Errorf("ipset oluşturulamadı: %w", err)
+		return fmt.Errorf("failed to create ipset: %w", err)
 	}
 
 	err = netlink.IpsetCreate(r.ipsetName+"_6", "hash:net", netlink.IpsetCreateOptions{
@@ -215,7 +215,7 @@ func (r *IPSet) ipsetCreate() error {
 		Family:  unix.AF_INET6,
 	})
 	if err != nil {
-		return fmt.Errorf("ipset oluşturulamadı: %w", err)
+		return fmt.Errorf("failed to create ipset: %w", err)
 	}
 
 	return nil
@@ -232,7 +232,7 @@ func (r *IPSet) ipsetDestroy() error {
 		errs = append(errs, err)
 	}
 	if errs != nil {
-		return fmt.Errorf("ipset kümesi yok edilemedi: %w", errors.Join(errs...))
+		return fmt.Errorf("failed to destroy ipset: %w", errors.Join(errs...))
 	}
 	return nil
 }

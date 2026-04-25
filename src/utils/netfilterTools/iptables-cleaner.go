@@ -16,7 +16,7 @@ func (nh *Helper) cleanIPTables(ipt *iptables.IPTables) error {
 
 	exists, err := ipt.GetCurrentRules()
 	if err != nil {
-		return fmt.Errorf("zincirleri listeleme hatası: %w", err)
+		return fmt.Errorf("failed to list chains: %w", err)
 	}
 
 	for table, chains := range exists {
@@ -37,12 +37,12 @@ func (nh *Helper) cleanIPTables(ipt *iptables.IPTables) error {
 				if errors.Is(err, iptables.ErrChainNotInitialized) {
 					err = ipt.RegisterChainPatch(table, chain)
 					if err != nil {
-						return fmt.Errorf("zincir kayıt hatası: %w", err)
+						return fmt.Errorf("failed to register chain: %w", err)
 					}
 					err = ipt.Delete(table, chain, r.Args()...)
 				}
 				if err != nil {
-					return fmt.Errorf("kural silme hatası: %w", err)
+					return fmt.Errorf("failed to delete rule: %w", err)
 				}
 			}
 		}
@@ -50,14 +50,14 @@ func (nh *Helper) cleanIPTables(ipt *iptables.IPTables) error {
 		for _, chain := range chainListToDelete {
 			err = ipt.RegisterChainDelete(table, chain)
 			if err != nil {
-				return fmt.Errorf("zincir silme hatası: %w", err)
+				return fmt.Errorf("failed to delete chain: %w", err)
 			}
 		}
 	}
 
 	err = ipt.Commit()
 	if err != nil {
-		return fmt.Errorf("iptables kuralları uygulanamadı: %w", err)
+		return fmt.Errorf("failed to apply iptables rules: %w", err)
 	}
 	return nil
 }

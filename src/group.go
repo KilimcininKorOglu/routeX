@@ -161,16 +161,16 @@ func (g *Group) enable() error {
 	ipset := g.app.nfHelper.IPSet(g.ID.String())
 	ipsetToLink := g.app.nfHelper.IPSetToLink(g.ID.String(), g.Interface, ipset)
 	if err := ipsetToLink.ClearIfDisabled(); err != nil {
-		return fmt.Errorf("iptables temizlenemedi: %w", err)
+		return fmt.Errorf("failed to clean iptables: %w", err)
 	}
 
 	if err := ipset.Enable(); err != nil {
-		return fmt.Errorf("ipset başlatılamadı: %w", err)
+		return fmt.Errorf("failed to start ipset: %w", err)
 	}
 	g.ipset = ipset
 
 	if err := ipsetToLink.Enable(); err != nil {
-		return fmt.Errorf("ipset arayüze bağlanamadı: %w", err)
+		return fmt.Errorf("failed to bind ipset to interface: %w", err)
 	}
 	g.ipsetToLink = ipsetToLink
 
@@ -203,7 +203,7 @@ func (g *Group) disable() error {
 			return nil
 		}
 		if err := g.ipsetToLink.Disable(); err != nil {
-			return fmt.Errorf("ipset arayüzden ayrılamadı: %w", err)
+			return fmt.Errorf("failed to unbind ipset from interface: %w", err)
 		}
 		g.ipsetToLink = nil
 		return nil
@@ -213,7 +213,7 @@ func (g *Group) disable() error {
 			return nil
 		}
 		if err := g.ipset.Disable(); err != nil {
-			return fmt.Errorf("ipset yok edilemedi: %w", err)
+			return fmt.Errorf("failed to destroy ipset: %w", err)
 		}
 		g.ipset = nil
 		return nil
@@ -356,7 +356,7 @@ func (g *Group) sync() error {
 
 	oldIPv4SubnetList, err := g.listIPv4Subnets()
 	if err != nil {
-		return fmt.Errorf("mevcut ipset listesi alınamadı: %w", err)
+		return fmt.Errorf("failed to get current ipset list: %w", err)
 	}
 	for subnet, newTTL := range newIPv4SubnetList {
 		if oldTTL, ok := oldIPv4SubnetList[subnet]; ok {
@@ -395,7 +395,7 @@ func (g *Group) sync() error {
 
 	oldIPv6SubnetList, err := g.listIPv6Subnets()
 	if err != nil {
-		return fmt.Errorf("mevcut ipset listesi alınamadı: %w", err)
+		return fmt.Errorf("failed to get current ipset list: %w", err)
 	}
 	for subnet, newTTL := range newIPv6SubnetList {
 		if oldTTL, ok := oldIPv6SubnetList[subnet]; ok {

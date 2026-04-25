@@ -31,7 +31,7 @@ func (r *PortRemap) insertIPTablesRules(ipt *iptables.IPTables) error {
 
 	err := ipt.RegisterChainOverride("nat", r.chainName)
 	if err != nil {
-		return fmt.Errorf("zincir oluşturulamadı: %w", err)
+		return fmt.Errorf("failed to create chain: %w", err)
 	}
 
 	for _, addr := range r.addresses {
@@ -45,19 +45,19 @@ func (r *PortRemap) insertIPTablesRules(ipt *iptables.IPTables) error {
 		} {
 			err = ipt.Append("nat", r.chainName, iptablesArgs...)
 			if err != nil {
-				return fmt.Errorf("kural eklenemedi: %w", err)
+				return fmt.Errorf("failed to add rule: %w", err)
 			}
 		}
 	}
 
 	err = ipt.Insert("nat", "PREROUTING", 1, "-j", r.chainName)
 	if err != nil {
-		return fmt.Errorf("zincir bağlama başarısız: %w", err)
+		return fmt.Errorf("failed to link chain: %w", err)
 	}
 
 	err = ipt.Commit()
 	if err != nil {
-		return fmt.Errorf("iptables kuralları uygulanamadı: %w", err)
+		return fmt.Errorf("failed to apply iptables rules: %w", err)
 	}
 	return nil
 }
@@ -70,17 +70,17 @@ func (r *PortRemap) deleteIPTablesRules(ipt *iptables.IPTables) error {
 
 	err := ipt.RegisterChainDelete("nat", r.chainName)
 	if err != nil {
-		errs = append(errs, fmt.Errorf("zincir temizlenemedi: %w", err))
+		errs = append(errs, fmt.Errorf("failed to clean chain: %w", err))
 	}
 
 	err = ipt.Delete("nat", "PREROUTING", "-j", r.chainName)
 	if err != nil {
-		errs = append(errs, fmt.Errorf("zincir bağlantısı kaldırılamadı: %w", err))
+		errs = append(errs, fmt.Errorf("failed to unlink chain: %w", err))
 	}
 
 	err = ipt.Commit()
 	if err != nil {
-		errs = append(errs, fmt.Errorf("iptables kuralları uygulanamadı: %w", err))
+		errs = append(errs, fmt.Errorf("failed to apply iptables rules: %w", err))
 	}
 	return errors.Join(errs...)
 }

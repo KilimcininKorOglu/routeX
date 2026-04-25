@@ -41,7 +41,7 @@ func (ipt *realIPTables) Save() ([]byte, error) {
 
 	if err := cmd.Run(); err != nil {
 		return nil, fmt.Errorf(
-			"iptables-save başarısız: %w: %s",
+			"iptables-save failed: %w: %s",
 			err, stderr.String(),
 		)
 	}
@@ -58,7 +58,7 @@ func (ipt *realIPTables) Restore(data []byte) error {
 
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf(
-			"iptables-restore başarısız: %w: %s",
+			"iptables-restore failed: %w: %s",
 			err, stderr.String(),
 		)
 	}

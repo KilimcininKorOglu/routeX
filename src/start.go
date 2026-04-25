@@ -31,7 +31,7 @@ func (a *App) Start(ctx context.Context) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Fprintf(os.Stderr, "panic: %v\n%s\n", r, debug.Stack())
-			err = errors.New(fmt.Sprintf("panik: %v", r))
+			err = errors.New(fmt.Sprintf("panic: %v", r))
 		}
 	}()
 
@@ -56,7 +56,7 @@ func (a *App) Start(ctx context.Context) (err error) {
 
 	nfh, err := netfilterTools.New(a.config.Netfilter.IPTables.ChainPrefix, a.config.Netfilter.IPSet.TablePrefix, a.config.Netfilter.DisableIPv4, a.config.Netfilter.DisableIPv6, a.config.Netfilter.StartMarkTableIndex)
 	if err != nil {
-		return fmt.Errorf("netfilter yardımcısı başlatılamadı: %w", err)
+		return fmt.Errorf("failed to start netfilter helper: %w", err)
 	}
 	a.nfHelper = nfh
 
@@ -71,7 +71,7 @@ func (a *App) Start(ctx context.Context) (err error) {
 	}
 
 	if err := a.nfHelper.CleanIPTables(); err != nil {
-		return fmt.Errorf("iptables temizlenemedi: %w", err)
+		return fmt.Errorf("failed to clean iptables: %w", err)
 	}
 
 	newCtx, cancel := context.WithCancel(ctx)
@@ -80,13 +80,13 @@ func (a *App) Start(ctx context.Context) (err error) {
 
 	httpServer, err := api.SetupHTTP(a, errChan)
 	if err != nil {
-		return fmt.Errorf("HTTP sunucu kurulumu başarısız: %w", err)
+		return fmt.Errorf("failed to set up HTTP server: %w", err)
 	}
 	defer httpServer.Close()
 
 	unixServer, err := api.SetupUnixSocket(a, errChan)
 	if err != nil {
-		return fmt.Errorf("UNIX soket kurulumu başarısız: %w", err)
+		return fmt.Errorf("failed to set up UNIX socket: %w", err)
 	}
 	defer unixServer.Close()
 
@@ -96,11 +96,11 @@ func (a *App) Start(ctx context.Context) (err error) {
 	for _, linkName := range a.config.Link {
 		link, err := netlink.LinkByName(linkName)
 		if err != nil {
-			return fmt.Errorf("%s bağlantısı bulunamadı: %w", linkName, err)
+			return fmt.Errorf("failed to find link %s: %w", linkName, err)
 		}
 		linkAddrList, err := netlink.AddrList(link, nl.FAMILY_ALL)
 		if err != nil {
-			return fmt.Errorf("%s arayüzünün adresleri listelenemedi: %w", linkName, err)
+			return fmt.Errorf("failed to list addresses of interface %s: %w", linkName, err)
 		}
 		interfaceAddrs = append(interfaceAddrs, linkAddrList...)
 	}
@@ -108,7 +108,7 @@ func (a *App) Start(ctx context.Context) (err error) {
 	if !a.config.DNSProxy.DisableRemap53 {
 		a.dnsOverrider = a.nfHelper.PortRemap("DNSOR", 53, a.config.DNSProxy.Host.Port, interfaceAddrs)
 		if err := a.dnsOverrider.Enable(); err != nil {
-			return fmt.Errorf("DNS geçersiz kılınamadı: %v", err)
+			return fmt.Errorf("failed to override DNS: %v", err)
 		}
 		defer func() {
 			_ = a.dnsOverrider.Disable()
@@ -117,10 +117,10 @@ func (a *App) Start(ctx context.Context) (err error) {
 
 	for _, group := range a.groups {
 		if err := group.Enable(); err != nil {
-			return fmt.Errorf("grup etkinleştirilemedi: %w", err)
+			return fmt.Errorf("failed to enable group: %w", err)
 		}
 		if err := group.Sync(); err != nil {
-			return fmt.Errorf("grup senkronize edilemedi: %w", err)
+			return fmt.Errorf("failed to sync group: %w", err)
 		}
 	}
 	defer func() {
@@ -155,14 +155,14 @@ func (a *App) ForceCommitIPTables() error {
 	if a.nfHelper.IPTables4 != nil {
 		err := a.nfHelper.IPTables4.Commit()
 		if err != nil {
-			return fmt.Errorf("iptables kuralları uygulanamadı: %w", err)
+			return fmt.Errorf("failed to apply iptables rules: %w", err)
 		}
 	}
 
 	if a.nfHelper.IPTables6 != nil {
 		err := a.nfHelper.IPTables6.Commit()
 		if err != nil {
-			return fmt.Errorf("iptables kuralları uygulanamadı: %w", err)
+			return fmt.Errorf("failed to apply iptables rules: %w", err)
 		}
 	}
 
@@ -199,11 +199,11 @@ func (a *App) getInterfaceAddresses() ([]netlink.Addr, error) {
 	for _, linkName := range a.config.Link {
 		link, err := netlink.LinkByName(linkName)
 		if err != nil {
-			return nil, fmt.Errorf("%s bağlantısı bulunamadı: %w", linkName, err)
+			return nil, fmt.Errorf("failed to find link %s: %w", linkName, err)
 		}
 		linkAddrList, err := netlink.AddrList(link, nl.FAMILY_ALL)
 		if err != nil {
-			return nil, fmt.Errorf("%s arayüzünün adresleri listelenemedi: %w", linkName, err)
+			return nil, fmt.Errorf("failed to list addresses of interface %s: %w", linkName, err)
 		}
 		addrList = append(addrList, linkAddrList...)
 	}

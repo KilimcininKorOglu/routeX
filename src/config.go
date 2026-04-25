@@ -26,16 +26,16 @@ func (a *App) LoadConfig() error {
 		if errors.Is(err, os.ErrNotExist) {
 			return nil
 		}
-		return fmt.Errorf("yapılandırma dosyası okunamadı: %w", err)
+		return fmt.Errorf("failed to read configuration file: %w", err)
 	}
 	cfg := config.Config{}
 	err = yaml.Unmarshal(cfgFile, &cfg)
 	if err != nil {
-		return fmt.Errorf("yapılandırma dosyası ayrıştırılamadı: %w", err)
+		return fmt.Errorf("failed to parse configuration file: %w", err)
 	}
 	err = a.ImportConfig(cfg)
 	if err != nil {
-		return fmt.Errorf("yapılandırma dosyası içe aktarılamadı: %w", err)
+		return fmt.Errorf("failed to import configuration file: %w", err)
 	}
 	return nil
 }
@@ -46,7 +46,7 @@ func (a *App) BackupConfig() error {
 		if errors.Is(err, os.ErrNotExist) {
 			return nil
 		}
-		return fmt.Errorf("yedek oluşturulamadı: %w", err)
+		return fmt.Errorf("failed to create backup: %w", err)
 	}
 	return os.WriteFile(cfgFileLocation+".bak", src, 0600)
 }
@@ -54,13 +54,13 @@ func (a *App) BackupConfig() error {
 func (a *App) SaveConfig() error {
 	out, err := yaml.Marshal(a.ExportConfig())
 	if err != nil {
-		return fmt.Errorf("yapılandırma dosyası serileştirilemedi: %w", err)
+		return fmt.Errorf("failed to serialize configuration file: %w", err)
 	}
 	if err := os.MkdirAll(cfgFolderLocation, os.ModePerm); err != nil {
-		return fmt.Errorf("yapılandırma dizini oluşturulamadı: %w", err)
+		return fmt.Errorf("failed to create configuration directory: %w", err)
 	}
 	if err := os.WriteFile(cfgFileLocation, out, 0600); err != nil {
-		return fmt.Errorf("yapılandırma dosyası yazılamadı: %w", err)
+		return fmt.Errorf("failed to write configuration file: %w", err)
 	}
 	return nil
 }
@@ -190,7 +190,7 @@ func (a *App) ImportConfig(cfg config.Config) error {
 				case models.RuleTypeDomain, models.RuleTypeNamespace, models.RuleTypeWildcard,
 					models.RuleTypeRegEx, models.RuleTypeSubnet, models.RuleTypeSubnet6:
 				default:
-					return fmt.Errorf("grup %q kural %q: geçersiz tür %q", group.Name, rule.Name, rule.Type)
+					return fmt.Errorf("group %q rule %q: invalid type %q", group.Name, rule.Name, rule.Type)
 				}
 				rules[idx] = &models.Rule{
 					ID:     rule.ID,
